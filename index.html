@@ -261,7 +261,6 @@ html,body{width:100%;height:100%;background:#000;font-family:'Arial Black','Micr
           <div class="dot b" data-type="b" data-idx="0"></div>
           <div class="dot b" data-type="b" data-idx="1"></div>
           <div class="dot b" data-type="b" data-idx="2"></div>
-          <div class="dot b" data-type="b" data-idx="3"></div>
         </div>
       </div>
       <div class="bso-row" id="bso-S">
@@ -269,7 +268,6 @@ html,body{width:100%;height:100%;background:#000;font-family:'Arial Black','Micr
         <div class="bso-dots">
           <div class="dot s" data-type="s" data-idx="0"></div>
           <div class="dot s" data-type="s" data-idx="1"></div>
-          <div class="dot s" data-type="s" data-idx="2"></div>
         </div>
       </div>
       <div class="bso-row" id="bso-O">
@@ -346,9 +344,12 @@ html,body{width:100%;height:100%;background:#000;font-family:'Arial Black','Micr
     </div>
     <div class="hint-section">
       <h3>BSO 燈號</h3>
-      <div class="hint-row"><div class="hint-icon">👆</div><div class="hint-desc"><strong>單擊燈點</strong> → Ball / Strike / Out +1（自動觸發特殊規則）</div></div>
-      <div class="hint-row"><div class="hint-icon">⏱️</div><div class="hint-desc"><strong>長按某行</strong> → 清除該行（B / S / O）</div></div>
-      <div class="hint-row"><div class="hint-icon">✌️</div><div class="hint-desc"><strong>雙擊 BSO 區</strong> → 全部清除</div></div>
+      <div class="hint-row"><div class="hint-icon">👆</div><div class="hint-desc"><strong>單擊 B 行</strong> → 壞球 +1（3燈亮滿後第4次自動清除）</div></div>
+      <div class="hint-row"><div class="hint-icon">👆</div><div class="hint-desc"><strong>單擊 S 行</strong> → 好球 +1（2燈亮滿後第3次自動清除）</div></div>
+      <div class="hint-row"><div class="hint-icon">👆</div><div class="hint-desc"><strong>單擊 O 行</strong> → 出局 +1（第3次清除 B/S/O 全部並換局）</div></div>
+      <div class="hint-row"><div class="hint-icon">✌️</div><div class="hint-desc"><strong>雙擊 B 行</strong> → 清除壞球燈號</div></div>
+      <div class="hint-row"><div class="hint-icon">✌️</div><div class="hint-desc"><strong>雙擊 S 行</strong> → 清除好球燈號</div></div>
+      <div class="hint-row"><div class="hint-icon">✌️</div><div class="hint-desc"><strong>雙擊 O 行</strong> → 清除 B/S/O 全部燈號</div></div>
     </div>
     <div class="hint-section">
       <h3>局數</h3>
@@ -560,27 +561,37 @@ mkGesture(document.getElementById('inning-block'),{
 });
 
 /* ── BSO ── */
-document.querySelectorAll('.dot').forEach(dot=>{
-  dot.addEventListener('touchend',e=>{
-    e.stopPropagation();
-    const type=dot.dataset.type;
-    if(type==='b'){
-      state.balls++;
-      if(state.balls>=4){state.balls=0;toast('四壞球 — 打者上壘！');}
-    }else if(type==='s'){
-      state.strikes++;
-      if(state.strikes>=3){state.strikes=0;toast('三振出局！');state.outs++;checkOuts();}
-    }else{state.outs++;checkOuts();}
-    flash(dot,type==='b'?'flash-g':type==='s'?'flash-y':'flash-r');render();
-  },{passive:true});
-});
+// 單擊各 row 加燈；雙擊各 row 清除該行
+// B: 3燈，第4次點擊清除；S: 2燈，第3次點擊清除；O: 第3次點擊清除B+S+O全部
 function checkOuts(){if(state.outs>=3){state.outs=0;state.balls=0;state.strikes=0;state.bases=[false,false,false];setTimeout(nextHalf,400);}}
+
 ['B','S','O'].forEach(t=>{
   const row=document.getElementById('bso-'+t);if(!row)return;
-  mkGesture(row,{onLongPress(){
-    if(t==='B')state.balls=0;else if(t==='S')state.strikes=0;else state.outs=0;
-    toast(t+' 清除');render();
-  }});
+  const flashCls=t==='B'?'flash-g':t==='S'?'flash-y':'flash-r';
+  mkGesture(row,{
+    onTap(){
+      if(t==='B'){
+        state.balls++;
+        if(state.balls>=4){state.balls=0;toast('四壞球 — 打者上壘！');}
+        else{flash(row,flashCls);}
+      }else if(t==='S'){
+        state.strikes++;
+        if(state.strikes>=3){state.strikes=0;toast('三振出局！');flash(row,flashCls);state.outs++;checkOuts();}
+        else{flash(row,flashCls);}
+      }else{
+        state.outs++;
+        if(state.outs>=3){flash(row,flashCls);checkOuts();}
+        else{flash(row,flashCls);}
+      }
+      render();
+    },
+    onDoubleTap(){
+      if(t==='B'){state.balls=0;toast('壞球 清除');}
+      else if(t==='S'){state.strikes=0;toast('好球 清除');}
+      else{state.outs=0;state.balls=0;state.strikes=0;toast('出局 — BSO 全清');}
+      render();
+    }
+  });
 });
 mkGesture(document.getElementById('bso-block'),{onDoubleTap(){state.balls=0;state.strikes=0;state.outs=0;toast('BSO 全清');render();}});
 
