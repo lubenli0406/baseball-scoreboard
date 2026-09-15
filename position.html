@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>棒球守備位置</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+  :root{color-scheme:dark;--navy:#061b3b;--blue:#125db5;--green:#3f9b08;--gold:#ffd43b;--white:#f8fbff}
+  *{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:"Microsoft JhengHei","PingFang TC",sans-serif;background:#061630;color:var(--white)}
+  body{padding:clamp(10px,2vw,28px);background:linear-gradient(135deg,#0b4594,#06265c 48%,#0c5590)}
+  .app{max-width:1100px;margin:auto}.top{display:flex;justify-content:space-between;align-items:end;gap:16px;margin:0 0 14px}.eyebrow{color:var(--gold);font-size:13px;font-weight:900;letter-spacing:.18em}.title{margin:5px 0 0;font-size:clamp(24px,4vw,42px)}.status{color:#b8cee8;font-size:13px}.dot{display:inline-block;width:8px;height:8px;margin-right:6px;border-radius:50%;background:#f55}.dot.live{background:#2de482;box-shadow:0 0 10px #2de482}
+  .field{position:relative;width:100%;aspect-ratio:1.5;overflow:hidden;border-radius:24px;background:#388900;box-shadow:0 18px 45px rgba(0,0,0,.35);border:4px solid rgba(255,255,255,.25);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0 9%,transparent 9% 18%)}
+  .outfield{position:absolute;inset:0 0 33%;background:radial-gradient(ellipse at 50% 100%,#5aaa0a 0 52%,transparent 53%),linear-gradient(135deg,#3d9507,#338200);clip-path:polygon(50% 0,100% 56%,100% 100%,0 100%,0 56%)}
+  .infield{position:absolute;width:38%;aspect-ratio:1;left:31%;top:47%;transform:rotate(45deg);background:#ffd326;box-shadow:0 0 0 16px rgba(255,211,38,.8)}
+  .diamond{position:absolute;width:25%;aspect-ratio:1;left:37.5%;top:58%;transform:rotate(45deg);background:#399400;border:3px solid rgba(255,255,255,.18)}
+  .base{position:absolute;width:5.5%;aspect-ratio:1;transform:rotate(45deg);background:#fff;border:2px solid #c9d5df;z-index:2}.b2{left:47.25%;top:50%}.b1{left:66%;top:68%}.b3{left:28%;top:68%}.home{left:47.25%;top:82%}
+  .card{position:absolute;z-index:4;transform:translate(-50%,-50%);width:clamp(86px,13%,145px);text-align:center;filter:drop-shadow(0 7px 6px rgba(0,0,0,.3))}.avatar{width:100%;aspect-ratio:1.15;background:linear-gradient(#eee,#c7c7c7);border-radius:2px 2px 0 0;display:grid;place-items:center;color:#777;font-size:clamp(32px,5vw,58px)}.avatar::before{content:"●";font-size:1.2em}.label{min-height:30px;padding:5px 6px;background:#03142c;border-radius:0 0 7px 7px;font-size:clamp(12px,1.7vw,19px);font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.label span{color:var(--gold);margin-right:7px}
+  .p{left:50%;top:65%}.c{left:50%;top:91%}.ss{left:30%;top:58%}.second{left:70%;top:58%}.third{left:23%;top:78%}.first{left:77%;top:78%}.lf{left:14%;top:30%}.cf{left:50%;top:18%}.rf{left:86%;top:30%}
+  .empty{position:absolute;inset:0;display:grid;place-items:center;color:#d8e7f8;font-size:18px}.legend{margin-top:12px;color:#b8cee8;font-size:13px}
+  @media(max-width:650px){.field{aspect-ratio:1.05}.card{width:18%}.p{top:61%}.c{top:91%}.ss{left:29%;top:55%}.second{left:71%;top:55%}.third{left:20%;top:76%}.first{left:80%;top:76%}.lf{left:11%;top:28%}.rf{left:89%;top:28%}.cf{top:14%}}
+</style>
+</head>
+<body>
+<main class="app"><header class="top"><div><div class="eyebrow">LIVE FIELD MAP</div><h1 class="title" id="teamName">第1隊守備位置</h1></div><div class="status"><span id="statusDot" class="dot"></span><span id="statusText">連線中...</span></div></header>
+<section class="field"><div class="outfield"></div><div class="infield"></div><div class="diamond"></div><div class="base b2"></div><div class="base b1"></div><div class="base b3"></div><div class="base home"></div><div id="cards"></div><div id="empty" class="empty">尚未設定守備位置</div></section><div class="legend">資料來源：Firebase Realtime Database · 守備位置會隨名單編輯即時更新</div></main>
+<script>
+const firebaseConfig={apiKey:"AIzaSyDSmrVOB-fkVZ2gGpW1i-T0kTutbt1nkNc",authDomain:"baseball-scoreboard-2e8e1.firebaseapp.com",databaseURL:"https://baseball-scoreboard-2e8e1-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"baseball-scoreboard-2e8e1",storageBucket:"baseball-scoreboard-2e8e1.firebasestorage.app",messagingSenderId:"705407067271",appId:"1:705407067271:web:038af55cf9a2d5ee7fc422"};firebase.initializeApp(firebaseConfig);
+const positions={"投手":"p","捕手":"c","游擊":"ss","二壘":"second","三壘":"third","一壘":"first","左外野":"lf","中外野":"cf","右外野":"rf"};
+function render(state){document.getElementById("teamName").textContent=`${state.team1Name||"第1隊"} 守備位置`;const cards=document.getElementById("cards");cards.innerHTML="";let count=0;(state.team1Roster||[]).forEach(player=>{const cls=positions[player.pos];if(!cls)return;count++;const card=document.createElement("div");card.className=`card ${cls}`;card.innerHTML=`<div class="avatar"></div><div class="label"><span>${player.pos}</span>${player.name||"-"}</div>`;cards.appendChild(card)});document.getElementById("empty").style.display=count?"none":"grid"}
+firebase.database().ref("scoreboard/state").on("value",snapshot=>{document.getElementById("statusDot").classList.add("live");document.getElementById("statusText").textContent="即時同步";render(snapshot.val()||{})},()=>{document.getElementById("statusText").textContent="連線失敗"});
+</script>
+</body>
+</html>

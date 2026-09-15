@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>棒球出場順序</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+  :root{color-scheme:dark;--navy:#061b3b;--blue:#0d4fa4;--gold:#ffd43b;--white:#f8fbff;--muted:#a8bdd8;}
+  *{box-sizing:border-box} html,body{margin:0;min-height:100%;font-family:"Microsoft JhengHei","PingFang TC",sans-serif;background:#031329;color:var(--white)}
+  body{padding:clamp(16px,4vw,48px);background:radial-gradient(circle at 50% 0%,#1457a6,#031329 62%)}
+  .app{max-width:760px;margin:auto}.eyebrow{color:var(--gold);font-size:14px;font-weight:800;letter-spacing:.18em}.title{margin:8px 0 24px;font-size:clamp(28px,5vw,48px)}
+  .status{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;margin-bottom:18px}.dot{width:9px;height:9px;border-radius:50%;background:#f55}.dot.live{background:#30df82;box-shadow:0 0 12px #30df82}
+  .list{display:grid;gap:10px}.player{display:grid;grid-template-columns:64px 1fr 110px;align-items:center;min-height:72px;padding:10px 16px;border:1px solid rgba(190,215,245,.28);border-radius:12px;background:rgba(2,18,42,.82);box-shadow:0 8px 25px rgba(0,0,0,.2)}
+  .order{font-size:26px;font-weight:900;color:var(--gold);text-align:center}.number{font-size:25px;font-weight:900}.name{font-size:clamp(20px,4vw,30px);font-weight:800}.pos{text-align:right;color:var(--muted);font-size:15px}
+  .empty{padding:32px;text-align:center;color:var(--muted);border:1px dashed rgba(190,215,245,.35);border-radius:12px}
+</style>
+</head>
+<body>
+<main class="app">
+  <div class="eyebrow">LIVE LINEUP</div>
+  <h1 class="title" id="teamName">第1隊出賽順序</h1>
+  <div class="status"><span id="statusDot" class="dot"></span><span id="statusText">連線中...</span></div>
+  <section id="list" class="list"></section>
+</main>
+<script>
+const firebaseConfig={apiKey:"AIzaSyDSmrVOB-fkVZ2gGpW1i-T0kTutbt1nkNc",authDomain:"baseball-scoreboard-2e8e1.firebaseapp.com",databaseURL:"https://baseball-scoreboard-2e8e1-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"baseball-scoreboard-2e8e1",storageBucket:"baseball-scoreboard-2e8e1.firebasestorage.app",messagingSenderId:"705407067271",appId:"1:705407067271:web:038af55cf9a2d5ee7fc422"};
+firebase.initializeApp(firebaseConfig);const list=document.getElementById("list");
+function render(state){const roster=Array.isArray(state.team1Roster)?state.team1Roster:[];document.getElementById("teamName").textContent=`${state.team1Name||"第1隊"} 出賽順序`;list.innerHTML="";if(!roster.length){list.innerHTML='<div class="empty">尚未設定球員名單</div>';return}roster.forEach((player,index)=>{const row=document.createElement("article");row.className="player";row.innerHTML=`<div class="order">${player.order||index+1}</div><div><div class="number">${player.number||""}</div><div class="name">${player.name||"-"}</div></div><div class="pos">${player.pos||"-"}</div>`;list.appendChild(row)})}
+firebase.database().ref("scoreboard/state").on("value",snapshot=>{document.getElementById("statusDot").classList.add("live");document.getElementById("statusText").textContent="即時同步";render(snapshot.val()||{})},()=>{document.getElementById("statusText").textContent="連線失敗"});
+</script>
+</body>
+</html>
