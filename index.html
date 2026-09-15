@@ -1,738 +1,1919 @@
 <!DOCTYPE html>
 <html lang="zh-Hant">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="棒球計分板">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#000000">
-<title>棒球計分板</title>
+<meta charset="UTF-8" />
+<title>棒球記分板</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+
+
+<script>
+const APP_META = {
+  app: "Ggs 怪機絲 EGL全球通棒球記分板 PRO6",
+  build: "2025-12-24-PRO6-A01-PITCHER-EDIT-LONGPRESS",
+  owner: "Ggs 怪機絲",
+  note: "投手列（名單面板紅框列）長按可改投手名字，並與外部投手欄位連動"
+};
+</script>
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{width:100%;height:100%;background:#000;font-family:'Arial Black','Microsoft JhengHei',Arial,sans-serif;overflow:hidden;color:#fff;user-select:none;touch-action:none;}
-#sb{position:fixed;inset:0;display:flex;flex-direction:column;background:linear-gradient(160deg,#060a14 0%,#0a1828 50%,#060a14 100%);}
-#top-bar{flex-shrink:0;height:9vw;display:flex;align-items:center;justify-content:space-between;padding:0 3vw;background:linear-gradient(90deg,#030d1c,#081e38,#030d1c);border-bottom:1px solid #1a3f6a;}
-#game-title{font-size:3.5vw;color:#f0c040;font-weight:900;text-shadow:0 0 10px rgba(240,192,64,.5);letter-spacing:.05em;flex:1;text-align:center;}
-#clock{font-size:3vw;color:#7ad4ff;font-family:'Courier New',monospace;flex-shrink:0;}
-#scores-area{flex-shrink:0;height:38vw;display:flex;}
-.team-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2vw;position:relative;}
-.team-col.home{background:linear-gradient(135deg,#041830,#0a2d55,#041830);border-right:1px solid #1a3f6a;}
-.team-col.away{background:linear-gradient(135deg,#1a0408,#3d0a14,#1a0408);border-left:1px solid #5a1a26;}
-.team-ha{font-size:2.5vw;color:#6688aa;letter-spacing:.2em;text-transform:uppercase;margin-bottom:1vw;}
-.team-name{font-size:6vw;font-weight:900;text-align:center;line-height:1.1;margin-bottom:1vw;}
-.team-col.home .team-name{color:#60b0ff;text-shadow:0 0 15px rgba(96,176,255,.6);}
-.team-col.away .team-name{color:#ff6060;text-shadow:0 0 15px rgba(255,96,96,.6);}
-.team-score{font-size:22vw;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;}
-.team-col.home .team-score{color:#60d0ff;text-shadow:0 0 30px rgba(96,208,255,.8);}
-.team-col.away .team-score{color:#ff8080;text-shadow:0 0 30px rgba(255,128,128,.8);}
-.pitcher-label{font-size:2.5vw;color:#6688aa;margin-top:1.5vw;}
-.pitcher-name{font-size:3vw;color:#c0d0e0;font-weight:bold;text-align:center;}
-.score-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-size:3.2vw;color:#fff;text-align:center;line-height:1.8;opacity:0;pointer-events:none;transition:opacity .3s;}
-#center-strip{flex-shrink:0;height:22vw;display:flex;align-items:stretch;background:linear-gradient(180deg,#040c18,#081828,#040c18);border-top:1px solid #1a3f6a;border-bottom:1px solid #1a3f6a;}
-#inning-block{width:22vw;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid #1a3f6a;gap:1vw;}
-#inning-label{font-size:2.5vw;color:#6688aa;letter-spacing:.15em;}
-#inning-num{font-size:12vw;font-weight:900;color:#f0c040;text-shadow:0 0 20px rgba(240,192,64,.7);line-height:1;}
-#inning-arrow{font-size:4vw;color:#f0c040;margin-top:-1vw;}
-#bso-block{flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 4vw;gap:2.5vw;}
-.bso-row{display:flex;align-items:center;gap:2.5vw;}
-.bso-lbl{font-size:3.5vw;font-weight:900;width:5vw;}
-.bso-lbl.b{color:#50dd50;}.bso-lbl.s{color:#f0c040;}.bso-lbl.o{color:#ff6644;}
-.bso-dots{display:flex;gap:2.5vw;}
-.dot{width:5vw;height:5vw;border-radius:50%;border:2px solid;transition:all .15s;}
-.dot.b{border-color:#50dd50;}.dot.s{border-color:#f0c040;}.dot.o{border-color:#ff6644;}
-.dot.b.on{background:#50dd50;box-shadow:0 0 8px #50dd50;}
-.dot.s.on{background:#f0c040;box-shadow:0 0 8px #f0c040;}
-.dot.o.on{background:#ff6644;box-shadow:0 0 8px #ff6644;}
-#diamond-block{width:26vw;display:flex;align-items:center;justify-content:center;border-left:1px solid #1a3f6a;}
-#diamond{position:relative;width:18vw;height:18vw;}
-.base{position:absolute;width:6vw;height:6vw;background:#1a3050;border:2px solid #3a6090;transform:rotate(45deg);transition:all .2s;}
-.base.on{background:#f0c040;border-color:#f0e040;box-shadow:0 0 12px rgba(240,192,64,.8);}
-#b2{top:0;left:50%;transform:translateX(-50%) rotate(45deg);}
-#b3{top:50%;left:0;transform:translateY(-50%) rotate(45deg);}
-#b1{top:50%;right:0;transform:translateY(-50%) rotate(45deg);}
-#bH{bottom:0;left:50%;transform:translateX(-50%) rotate(45deg);width:4.5vw;height:4.5vw;background:#fff2;border-color:#fff5;}
-#table-area{flex-shrink:0;height:18vw;background:#030810;border-top:1px solid #1a3f6a;border-bottom:1px solid #1a3f6a;overflow:hidden;padding:0 2vw;display:flex;align-items:center;}
-#inn-table{width:100%;border-collapse:collapse;font-size:3vw;}
-#inn-table th{color:#5577aa;font-size:2.6vw;padding:0 .6vw;text-align:center;font-weight:normal;}
-#inn-table td{text-align:center;padding:0 .6vw;font-variant-numeric:tabular-nums;}
-.tname{text-align:left !important;font-weight:bold;color:#9abacc;min-width:16vw;font-size:2.8vw;}
-.home-row td{color:#60b0ff;}.away-row td{color:#ff8080;}
-.cur-inn{background:rgba(240,192,64,.15);color:#f0c040 !important;}
-.score-total{font-weight:900;font-size:3.5vw !important;}
-.rhe-col{color:#f0c040 !important;font-weight:bold;}
-.divider{border-right:1px solid #1a3f6a;}
-#ticker{flex-shrink:0;height:8vw;background:#080f1c;border-top:1px solid #1a3f6a;display:flex;align-items:center;overflow:hidden;}
-#ticker-badge{flex-shrink:0;background:#f0c040;color:#000;font-weight:900;font-size:2.8vw;padding:.5vw 2vw;margin-right:2vw;}
-#ticker-wrap{flex:1;overflow:hidden;}
-#ticker-txt{display:inline-block;white-space:nowrap;font-size:3vw;color:#b8ccd8;animation:scroll 30s linear infinite;}
-@keyframes scroll{0%{transform:translateX(100vw)}100%{transform:translateX(-100%)}}
-#toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.85);border:1px solid #f0c040;border-radius:3vw;padding:3vw 6vw;font-size:4.5vw;color:#f0c040;font-weight:bold;text-align:center;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .25s;z-index:9999;}
-#hint-btn{position:fixed;bottom:4vw;right:4vw;width:12vw;height:12vw;border-radius:50%;background:rgba(240,192,64,.9);border:none;color:#000;font-size:5vw;font-weight:900;display:flex;align-items:center;justify-content:center;z-index:2000;box-shadow:0 2px 12px rgba(0,0,0,.5);cursor:pointer;}
-#hint-panel{position:fixed;inset:0;z-index:1999;background:rgba(0,0,0,.75);display:none;align-items:flex-end;}
-#hint-panel.open{display:flex;}
-#hint-sheet{width:100%;background:#0a1828;border-top:2px solid #1a3f6a;border-radius:4vw 4vw 0 0;padding:4vw;max-height:85vh;overflow-y:auto;}
-#hint-sheet h2{font-size:4.5vw;color:#f0c040;margin-bottom:3vw;text-align:center;}
-.hint-section{margin-bottom:4vw;}
-.hint-section h3{font-size:3.8vw;color:#7ad4ff;margin-bottom:2vw;border-bottom:1px solid #1a3f6a;padding-bottom:1.5vw;}
-.hint-row{display:flex;align-items:flex-start;gap:2vw;margin-bottom:2vw;}
-.hint-icon{font-size:5vw;width:8vw;flex-shrink:0;text-align:center;}
-.hint-desc{font-size:3.2vw;color:#c0d0e0;line-height:1.6;flex:1;}
-.hint-desc strong{color:#f0c040;}
-.hint-close{width:100%;padding:3vw;background:#1a3050;border:1px solid #2a5080;border-radius:2vw;color:#c0d8f0;font-size:4vw;font-weight:bold;cursor:pointer;margin-top:2vw;}
-/* PWA install banner */
-#install-bar{position:fixed;top:0;left:0;right:0;z-index:5000;background:#f0c040;color:#000;display:flex;align-items:center;justify-content:space-between;padding:2.5vw 4vw;font-size:3.2vw;font-weight:bold;transform:translateY(-100%);transition:transform .4s;}
-#install-bar.show{transform:translateY(0);}
-#install-bar button{background:#000;color:#f0c040;border:none;border-radius:2vw;padding:1.5vw 4vw;font-size:3vw;font-weight:bold;cursor:pointer;}
-#install-bar .dismiss{background:transparent;color:#000;font-size:4vw;padding:1vw 2vw;}
-/* Edit modal */
-#edit-modal{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.75);display:none;align-items:flex-end;}
-#edit-modal.open{display:flex;}
-#edit-sheet{width:100%;background:#0a1828;border-top:2px solid #1a3f6a;border-radius:4vw 4vw 0 0;padding:4vw;max-height:70vh;overflow-y:auto;}
-#edit-title{font-size:4.5vw;color:#f0c040;text-align:center;margin-bottom:4vw;}
-#edit-content{display:flex;flex-direction:column;gap:3vw;}
-.edit-row{display:flex;align-items:center;gap:3vw;}
-.edit-lbl{font-size:3.5vw;color:#88aacc;min-width:20vw;}
-.edit-inp{flex:1;background:#060f1e;border:1px solid #2a4a6a;border-radius:2vw;color:#e0e8f0;padding:2.5vw 3vw;font-size:4vw;font-family:'Microsoft JhengHei',Arial,sans-serif;}
-.edit-inp:focus{outline:none;border-color:#f0c040;}
-.edit-btns{display:flex;gap:3vw;margin-top:2vw;}
-.edit-btn{flex:1;padding:3.5vw;border-radius:2vw;font-size:4vw;font-weight:bold;cursor:pointer;border:none;}
-.edit-btn.cancel{background:#1a3050;color:#c0d8f0;}
-.edit-btn.confirm{background:#f0c040;color:#000;}
-.ripple-container{position:relative;overflow:hidden;}
-.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.3);pointer-events:none;transform:scale(0);animation:ripple-anim .4s ease-out forwards;}
-@keyframes ripple-anim{to{transform:scale(4);opacity:0;}}
-@keyframes flash-green{0%,100%{background:inherit}50%{background:rgba(80,221,80,.25)}}
-@keyframes flash-yellow{0%,100%{background:inherit}50%{background:rgba(240,192,64,.3)}}
-@keyframes flash-red{0%,100%{background:inherit}50%{background:rgba(255,80,80,.3)}}
-.flash-g{animation:flash-green .4s;}.flash-y{animation:flash-yellow .4s;}.flash-r{animation:flash-red .4s;}
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-/* ══════════════════════════════════════════
-   LANDSCAPE LAYOUT — Pixel 9 Pro 1088×488
-   orientation:landscape のとき全面再設計
-   左半：主客隊得分 | 右半：局BSO壘包+表格
-══════════════════════════════════════════ */
-/* ══ LANDSCAPE — Pixel 9 Pro 1088×488 CSS px ══ */
-@media (orientation: landscape) {
-  /* Grid 重排：topbar 全寬，下方左38%得分區 右62%操控區 */
-  #sb {
-    display: grid;
-    grid-template-rows: 7vh 1fr;
-    grid-template-columns: 36% 64%;
-    grid-template-areas:
-      "topbar topbar"
-      "scores right";
-    height: 100vh;
-    overflow: hidden;
-  }
-  #top-bar {
-    grid-area: topbar;
-    height: 7vh;
-    padding: 0 2vw;
-  }
-  #game-title { font-size: 2vh; }
-  #clock { font-size: 1.8vh; }
-
-  /* 左欄：上下各半，主隊上、客隊下 */
-  #scores-area {
-    grid-area: scores;
-    flex-direction: column;
-    height: auto;
-    border-right: 1px solid #1a3f6a;
-    overflow: hidden;
-  }
-  .team-col { padding: 1vh 2vw; }
-  .team-ha { font-size: 1.4vh; margin-bottom: 0.2vh; }
-  .team-name { font-size: 2.4vh; margin-bottom: 0.2vh; }
-  .team-score { font-size: 10vh; line-height: 1; }
-  .pitcher-label { font-size: 1.2vh; margin-top: 0.4vh; }
-  .pitcher-name { font-size: 1.6vh; }
-
-  /* 右欄容器 */
-  #right-col {
-    grid-area: right;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    overflow: hidden;
+  html,body{
+    margin:0; padding:0;
+    background:transparent !important;
+    color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Microsoft JhengHei",sans-serif;
+    user-select:none;
+    overflow:hidden;
   }
 
-  /* center-strip：BSO + 壘包，高度 46% */
-  #center-strip {
-    flex: 0 0 46%;
-    height: 46%;
-    border-top: none;
-    border-bottom: 1px solid #1a3f6a;
-    display: flex;
-    flex-direction: row;
+  :root{
+    --mlb-navy:#041e42;
+    --mlb-red:#d50032;
+    --mlb-silver:#c4ced4;
+    --mlb-cream:#f5f5f5;
+
+    /* ✅ 對稱核心：兩邊比分框寬度永遠一致 */
+    --scoreW: clamp(14vw, 18vh, 22vw);
   }
-  #inning-block {
-    width: 15%;
-    border-right: 1px solid #1a3f6a;
+
+  /* 直向提示 */
+  .orientation-warning{
+    position:fixed; inset:0;
+    display:none;
+    align-items:center; justify-content:center;
+    background:transparent;
+    color:#fff;
+    z-index:9999999;
+    text-align:center;
+    padding:0 8vw;
+    font-size:3vh;
   }
-  #inning-label { font-size: 1.4vh; }
-  #inning-num { font-size: 7vh; }
-  #inning-arrow { font-size: 2.2vh; margin-top: -0.5vh; }
-
-  #bso-block { padding: 0 2vw; gap: 1.2vh; }
-  .bso-row { gap: 1.8vw; }
-  .bso-lbl { font-size: 2vh; width: 3vw; }
-  .bso-dots { gap: 1.8vw; }
-  .dot { width: 3vw; height: 3vw; border-width: 1.5px; }
-
-  #diamond-block { width: 22%; }
-  #diamond { width: 12vw; height: 12vw; }
-  .base { width: 3.8vw; height: 3.8vw; }
-  #bH { width: 3.2vw; height: 3.2vw; }
-
-  /* 得分表：佔剩餘空間 */
-  #table-area {
-    flex: 1;
-    height: auto;
-    padding: 0 1.5vw;
-    border-bottom: 1px solid #1a3f6a;
-    overflow: hidden;
+  .orientation-warning-inner{
+    border:0.4vh solid rgba(255,255,255,0.5);
+    border-radius:2vh;
+    padding:3vh 4vw;
+    background:radial-gradient(circle at top, #041e42 0%, #000 80%);
+    box-shadow:0 0 3vh rgba(0,0,0,0.9);
   }
-  #inn-table { font-size: 1.6vh; }
-  #inn-table th { font-size: 1.4vh; padding: 0 0.5vw; }
-  #inn-table td { padding: 0 0.5vw; }
-  .tname { font-size: 1.5vh; min-width: 9vw; }
-  .score-total { font-size: 2vh !important; }
+  .orientation-warning-title{ font-size:4vh; font-weight:900; margin-bottom:1.5vh; }
+  .orientation-warning-text{ font-size:2.4vh; opacity:0.85; }
 
-  /* 跑馬燈 */
-  #ticker { flex: 0 0 6vh; height: 6vh; }
-  #ticker-badge { font-size: 1.5vh; padding: 0.3vh 1.5vw; margin-right: 1.5vw; }
-  #ticker-txt { font-size: 1.6vh; }
+  @media (orientation: portrait){
+    .stage{ display:none; }
+    .orientation-warning{ display:flex; }
+  }
+  @media (orientation: landscape){
+    .orientation-warning{ display:none; }
+  }
 
-  /* 說明按鈕 & Toast */
-  #hint-btn { width: 5.5vw; height: 5.5vw; font-size: 2.2vw; bottom: 1.5vw; right: 1.5vw; }
-  #toast { font-size: 2.4vh; padding: 1.5vh 3vw; border-radius: 1.5vw; }
-  #install-bar { font-size: 1.6vh; padding: 1vh 2vw; }
-  #install-bar button { font-size: 1.4vh; padding: 0.6vh 2vw; }
-}
+  .stage{
+    position:absolute; inset:0;
+    width:100vw; height:100vh;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .bar{
+    position:relative;
+    width:94vw; height:86vh;
+    padding:2vh 2vw;
+    background:none;
+    border-radius:2vh;
+    border:0.5vh solid var(--mlb-navy);
+    box-shadow:0 0 3vh rgba(0,0,0,0.9), 0 0 3vh rgba(196,206,212,0.8);
+    display:flex;
+    flex-direction:column;
+    gap:1.5vh;
+    overflow:hidden;
+    animation:barGlow 14s ease-in-out infinite;
+    isolation:isolate;
+  }
+
+  @keyframes barGlow{
+    0%{ border-color:#ff3366; box-shadow:0 0 3vh rgba(0,0,0,0.9),0 0 3.5vh rgba(255,51,102,0.9); }
+    25%{ border-color:#3b82f6; box-shadow:0 0 3vh rgba(0,0,0,0.9),0 0 3.5vh rgba(59,130,246,0.9); }
+    50%{ border-color:#22c55e; box-shadow:0 0 3vh rgba(0,0,0,0.9),0 0 3.5vh rgba(34,197,94,0.9); }
+    75%{ border-color:#e5e7eb; box-shadow:0 0 3vh rgba(0,0,0,0.9),0 0 3.5vh rgba(229,231,235,0.95); }
+    100%{ border-color:#ff3366; box-shadow:0 0 3vh rgba(0,0,0,0.9),0 0 3.5vh rgba(255,51,102,0.9); }
+  }
+
+  /* ✅ 背景獨立層：雙指調透明，文字永遠 100% */
+  .bar::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    z-index:0;
+    border-radius:2vh;
+    background:radial-gradient(circle at top,#0a2d64 0%,#020714 55%,#000000 100%);
+    opacity:var(--barBgOpacity, 1);
+    pointer-events:none;
+  }
+  .bar > *{ position:relative; z-index:1; }
+
+  /* GPS/天氣/時間 */
+  .team-top-info{
+    padding:0.6vh 1vw;
+    border-radius:1.2vh;
+    background:linear-gradient(90deg, rgba(4,30,66,0.9), rgba(0,0,0,0.95));
+    border:0.25vh solid rgba(196,206,212,0.7);
+    box-shadow:0 0 1.4vh rgba(0,0,0,0.8);
+    font-size:2.2vh;
+    letter-spacing:0.05em;
+    display:inline-block;
+    max-width:60vw;
+    overflow:hidden;
+    line-height:1.4;
+  }
+  .weather-top-left{
+    position:absolute;
+    top:1.5vh; left:1.5vw;
+    z-index:12;
+    text-align:left;
+  }
+
+  .main-panel{
+    flex:6.0;
+    display:flex;
+    flex-direction:column;
+    gap:2vh;
+  }
+
+  /* =========================
+     ✅ 歸 0：左邊中間
+     ========================= */
+  .reset-badge{
+    position:fixed;
+    top:50%;
+    left:1.2vw;
+    transform:translateY(-50%);
+    width:6vh; height:6vh;
+    border-radius:50%;
+    border:0.3vh solid #fff;
+    display:flex;
+    align-items:center; justify-content:center;
+    font-size:3vh; font-weight:900;
+    color:#fff;
+    opacity:0.05;
+    cursor:pointer;
+    z-index:999999;
+  }
+
+  /* 比賽名稱 */
+  .title-row{
+    flex:1.4;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .game-title-box{
+    padding:1.2vh 4vh;
+    border-radius:999px;
+    background:linear-gradient(135deg, rgba(4,30,66,0.96), rgba(0,0,0,0.95));
+    border:0.45vh solid rgba(196,206,212,0.95);
+    box-shadow:0 0 3vh rgba(0,0,0,1), 0 0 2.4vh rgba(213,0,50,0.9);
+    cursor:pointer;
+    max-width:100%;
+  }
+  .game-title-text{
+    font-size:6.2vh;
+    font-weight:900;
+    letter-spacing:0.1em;
+    text-align:center;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    text-shadow:0 0 1.8vh rgba(0,0,0,1), 0 0 1.6vh rgba(255,255,255,0.9);
+  }
+
+  /* ✅ 上排左右對稱 Grid */
+  .top-row{
+    flex:3.4;
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4vw;
+    align-items:stretch;
+  }
+  .team-column{ min-width:0; display:flex; }
+
+  .team1-block,
+  .team2-block{
+    width:100%;
+    min-width:0;
+    padding:1.8vh 2.4vh;
+    border-radius:2vh;
+    background:linear-gradient(135deg, rgba(4,30,66,0.8), rgba(0,0,0,0.9));
+    border:0.35vh solid rgba(196,206,212,0.9);
+    box-shadow:0 0 2.4vh rgba(0,0,0,0.9);
+    overflow:hidden;
+
+    display:grid;
+    align-items:center;
+    column-gap:2vw;
+  }
+  .team1-block{ grid-template-columns: 1fr var(--scoreW); }
+  .team2-block{ grid-template-columns: var(--scoreW) 1fr; }
+
+  /* ✅ 隊名強制完整顯示：不出現 ...（改用 JS 縮字） */
+  .team-name{
+    min-width:0;
+    font-size:10vh;
+    font-weight:900;
+    letter-spacing:0.05em;
+    white-space:nowrap;
+    cursor:pointer;
+    text-align:center;
+    text-shadow:0 0 1.6vh rgba(0,0,0,1), 0 0 1.4vh rgba(255,255,255,0.85);
+    overflow:hidden;
+    text-overflow:clip;
+    line-height:1.0;
+  }
+
+  .score-box{
+    width:100%;
+    overflow:hidden;
+    padding:1.8vh 2.0vh;
+    border-radius:1.4vh;
+    background:linear-gradient(135deg,#111,#000);
+    border:0.55vh solid var(--mlb-silver);
+    box-shadow:0 0 3.2vh rgba(0,0,0,1), 0 0 2.2vh rgba(4,30,66,0.9);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .score-number{
+    font-variant-numeric: tabular-nums;
+    letter-spacing:-0.04em;
+    font-size:clamp(10vh, 14vw, 18vh);
+    font-weight:900;
+    color:#fff;
+    line-height:0.95;
+    display:block;
+    text-shadow:0 0 0.6vh rgba(213,0,50,1), 0 0 1.2vh rgba(0,0,0,1);
+  }
+
+  /* 打擊/投手邊框高亮 */
+  .team-batting,
+  .score-batting,
+  .bp-box.mode-batter{
+    border-color:var(--mlb-red) !important;
+    box-shadow:0 0 2.6vh rgba(213,0,50,0.9), 0 0 1.6vh rgba(0,0,0,1);
+  }
+  .team-pitching,
+  .score-pitching,
+  .bp-box.mode-pitcher{
+    border-color:var(--mlb-silver) !important;
+    box-shadow:0 0 2.2vh rgba(0,0,0,1), 0 0 1.8vh rgba(4,30,66,0.9);
+  }
+
+  /* 下排 */
+  .bottom-row{
+    flex:3.0;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:2.2vw;
+    min-width:0;
+  }
+  .center-block{
+    flex:1.9;
+    display:flex;
+    align-items:center;
+    gap:2.2vw;
+    min-width:0;
+  }
+  .inning-box{
+    display:flex;
+    align-items:center;
+    gap:2vw;
+    padding:1.2vh 3.2vh;
+    border-radius:999px;
+    background:linear-gradient(135deg,#041e42,#01040a);
+    border:0.55vh solid var(--mlb-silver);
+    box-shadow:0 0 3vh rgba(0,0,0,0.9), 0 0 2.4vh rgba(4,30,66,0.9);
+    cursor:pointer;
+    flex:0 0 auto;
+  }
+  .inning-number{ font-size:6.5vh; font-weight:900; }
+  .half-indicator{
+    width:6.5vh; height:6.5vh;
+    border-radius:999px;
+    border:0.55vh solid #777;
+    background:radial-gradient(circle at top, #041e42 0%, #020813 80%);
+    font-size:4.5vh; font-weight:900;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    box-shadow:0 0 2.2vh rgba(0,0,0,1), 0 0 1.8vh rgba(4,30,66,0.9);
+    flex:0 0 auto;
+  }
+  .half-indicator.top{ color:#00d5ff; border-color:#00d5ff; }
+  .half-indicator.bot{ color:#ffdc5c; border-color:#ffdc5c; }
+
+  .bases-wrapper{ position:relative; width:16vh; height:13vh; flex:0 0 auto; }
+  .base{
+    position:absolute;
+    width:5.4vh; height:5.4vh;
+    border-radius:0.8vh;
+    border:0.45vh solid var(--mlb-silver);
+    transform:rotate(45deg);
+    background:rgba(3,13,30,0.9);
+    box-shadow:0 0 2.4vh rgba(0,0,0,1);
+    cursor:pointer;
+  }
+  #base2{ top:0; left:50%; transform:translateX(-50%) rotate(45deg); }
+  #base1{ bottom:0; right:0; }
+  #base3{ bottom:0; left:0; }
+  .base.on{
+    background:#ffe600;
+    border-color:#ffe600;
+    box-shadow:0 0 3vh #ffee55, 0 0 1.6vh rgba(0,0,0,1);
+  }
+
+  .pitch-clock{ display:flex; align-items:center; gap:1.2vw; flex:0 0 auto; }
+  .game-box{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:1vw;
+    padding:0.7vh 2vh;
+    border-radius:999px;
+    background:linear-gradient(135deg,#04121f,#010308);
+    border:0.3vh solid rgba(196,206,212,0.85);
+    box-shadow:0 0 1.6vh rgba(0,0,0,0.9), 0 0 1.2vh rgba(4,30,66,0.9);
+    font-size:2.6vh;
+    white-space:nowrap;
+  }
+  #gameTimer{
+    font-weight:900;
+    letter-spacing:0.05em;
+    font-size:5vh;
+    cursor:pointer;
+    text-shadow:0 0 1.2vh rgba(0,0,0,1);
+  }
+  #gameTimer.running{
+    text-shadow:0 0 1.6vh rgba(0,255,153,0.9), 0 0 1vh rgba(0,0,0,1);
+  }
+
+  .osb-block{
+    flex:1.0;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    gap:1.3vw;
+    min-width:0;
+  }
+  .osb-unit{
+    display:flex;
+    align-items:center;
+    gap:0.8vw;
+    padding:1.0vh 2.0vh;
+    border-radius:999px;
+    background:linear-gradient(135deg,#04121f,#010308);
+    border:0.55vh solid rgba(196,206,212,0.95);
+    box-shadow:0 0 2.2vh rgba(0,0,0,1), 0 0 1.8vh rgba(4,30,66,0.9);
+    cursor:pointer;
+    max-width:100%;
+  }
+  .osb-letter{
+    font-size:clamp(4.8vh, 5.4vh, 6.2vh);
+    font-weight:900;
+    text-shadow:0 0 2.2vh rgba(0,0,0,1);
+    flex:0 0 auto;
+  }
+  .osb-lights{ display:flex; gap:0.8vw; min-width:0; }
+
+  .light{
+    width:clamp(2.6vh, 3.0vh, 3.4vh);
+    height:clamp(2.6vh, 3.0vh, 3.4vh);
+    border-radius:50%;
+    background:#222b3b;
+    border:0.35vh solid #44546e;
+    box-shadow:0 0 2.2vh #000;
+    flex:0 0 auto;
+  }
+
+  /* ===============================
+     ✅ BSO 燈號配色（成品）
+     B = 綠色 / S = 黃色 / O = 紅色
+     =============================== */
+  .light.on-ball{
+    background:#22c55e;
+    border-color:#4ade80;
+    box-shadow:0 0 3vh #4ade80;
+  }
+  .light.on-strike{
+    background:#facc15;
+    border-color:#fde047;
+    box-shadow:0 0 3vh #fde047;
+  }
+  .light.on-out{
+    background:#ef4444;
+    border-color:#f87171;
+    box-shadow:0 0 3vh #f87171;
+  }
+
+  /* ===============================
+     ✅ O 出局（兩出局）轉播閃爍效果
+     觸發條件：#outsArea.out-two
+     =============================== */
+  @keyframes outBlink {
+    0%   { filter:brightness(1.0); transform:scale(1.00); opacity:0.75; }
+    100% { filter:brightness(1.55); transform:scale(1.06); opacity:1.00; }
+  }
+  @keyframes outPulse {
+    0%   { transform:scale(1.00); }
+    50%  { transform:scale(1.16); }
+    100% { transform:scale(1.00); }
+  }
+  #outsArea.out-two .light.on-out{
+    animation: outBlink 0.20s alternate infinite;
+    box-shadow: 0 0 4vh rgba(255,0,0,0.85);
+  }
+  #outsArea.out-two .light.on-out:last-child{
+    animation: outBlink 0.16s alternate infinite, outPulse 0.42s ease-in-out infinite;
+  }
+
+  /* BP */
+  .bp-row{
+    flex:1.6;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:4vw;
+    padding:0 3vw;
+  }
+  .bp-box{
+    flex:1;
+    min-width:0;
+    max-width:40vw;
+    padding:0.8vh 2vw;
+    border-radius:999px;
+    background:linear-gradient(135deg,#04121f,#010308);
+    border:0.35vh solid rgba(196,206,212,0.9);
+    box-shadow:0 0 2vh rgba(0,0,0,1), 0 0 1.6vh rgba(4,30,66,0.9);
+    display:flex;
+    align-items:center;
+    gap:1vw;
+    cursor:pointer;
+  }
+  .bp-main{
+    display:flex;
+    flex:1;
+    align-items:center;
+    gap:1vw;
+    justify-content:center;
+  }
+  .bp-label{
+    font-size:2.1vh;
+    font-weight:900;
+    letter-spacing:0.18em;
+    color:var(--mlb-silver);
+    white-space:nowrap;
+  }
+  .bp-name{
+    font-size:7vh;
+    font-weight:900;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    text-align:center;
+    width:100%;
+  }
+  .bp-arrow{
+    width:3.2vh; height:3.2vh;
+    border-radius:50%;
+    border:0.25vh solid rgba(196,206,212,0.9);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    font-size:2.2vh;
+    font-weight:900;
+    user-select:none;
+  }
+  .bp-box.mode-batter .bp-arrow{ display:flex; }
+
+  /* roster panel */
+  .roster-panel{
+    position:absolute;
+    top:14vh; bottom:12vh;
+    width:36vw;
+    padding:2vh 2vw;
+    background:rgba(0,5,15,0.92);
+    border-radius:2vh;
+    border:0.35vh solid rgba(196,206,212,0.95);
+    box-shadow:0 0 3vh rgba(0,0,0,0.9), 0 0 2.6vh rgba(4,30,66,0.9);
+    display:none;
+    flex-direction:column;
+    z-index:50;
+  }
+  .roster-panel.show{ display:flex; }
+  .roster-left{ left:3vw; }
+  .roster-right{ right:3vw; }
+
+  .roster-header{ display:flex; flex-direction:column; margin-bottom:1.2vh; }
+  .roster-team{
+    font-size:4.6vh;
+    font-weight:900;
+    letter-spacing:0.08em;
+    text-shadow:0 0 1.4vh rgba(0,0,0,1);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .roster-sub{ font-size:2vh; opacity:0.8; letter-spacing:0.2em; }
+
+  .roster-pitcher-box{
+    display:flex;
+    align-items:center;
+    gap:1.2vw;
+    padding:0.8vh 1.4vh;
+    border-radius:999px;
+    background:linear-gradient(135deg,#041e42,#010308);
+    border:0.3vh solid rgba(213,0,50,0.9);
+    margin-bottom:1vh;
+    flex-shrink:0;
+    cursor:pointer;
+  }
+  .roster-pitcher-label{ font-size:2.1vh; font-weight:700; color:var(--mlb-silver); }
+  .roster-pitcher-name{ font-size:2.6vh; font-weight:900; }
+
+  .roster-head-row,.roster-row{
+    display:grid;
+    grid-template-columns:1fr 3fr 1.4fr;
+    align-items:center;
+    gap:0.5vw;
+  }
+  .roster-head-row{
+    font-size:2vh;
+    opacity:0.85;
+    border-bottom:0.2vh solid rgba(196,206,212,0.7);
+    padding-bottom:0.5vh;
+    margin-bottom:0.5vh;
+  }
+  .roster-list{
+    flex:1;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    gap:0.4vh;
+  }
+  .roster-row{
+    font-size:2.8vh;
+    font-weight:700;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .roster-col-order{ text-align:center; }
+  .roster-col-pos{ text-align:center; }
+
+  /* Copyright */
+  .footer-copyright{
+    position:absolute;
+    left:0.6vw;
+    bottom:0.4vh;
+    font-size:1.8vh;
+    opacity:0.2;
+    letter-spacing:0.08em;
+    color:#c4ced4;
+    text-shadow:0 0 0.6vh rgba(0,0,0,1);
+    pointer-events:none;
+    white-space:nowrap;
+    z-index:200;
+  }
+
+  /* Flash */
+  .flash-overlay{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.9);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9999998;
+    pointer-events:none;
+  }
+  .flash-text{
+    font-size:30vh;
+    font-weight:900;
+    padding:4vh 8vw;
+    border-radius:2vh;
+    text-align:center;
+    line-height:1;
+    white-space:pre-line; /* ✅ 允許 \n 第二行 */
+  }
+
+  .flash-greenwhite{ background:radial-gradient(circle at center, rgba(180,255,200,0.28), rgba(0,20,0,0.96)); }
+  .flash-greenwhite .flash-text{
+    color:#e9ffe9;
+    border:1.2vh solid #66ff66;
+    text-shadow:0 0 3vh #66ff66, 0 0 5vh #ffffff;
+    animation:flashGreenWhite 0.22s alternate infinite;
+  }
+  .flash-rgwhite{ background:radial-gradient(circle at center, rgba(255,255,255,0.25), rgba(0,0,0,0.96)); }
+  .flash-rgwhite .flash-text{
+    color:#ffffff;
+    border:1.2vh solid #ff3366;
+    text-shadow:0 0 2.5vh #ff3366, 0 0 4vh #66ff66, 0 0 5vh #ffffff;
+    animation:flashRGWhite 0.22s alternate infinite;
+  }
+  .flash-bluewhite{ background:radial-gradient(circle at center, rgba(160,200,255,0.24), rgba(0,0,0,0.96)); }
+  .flash-bluewhite .flash-text{
+    color:#e6f3ff;
+    border:1.2vh solid #66aaff;
+    text-shadow:0 0 3vh #66aaff, 0 0 5vh #ffffff;
+    animation:flashBlueWhite 0.18s alternate infinite;
+  }
+  .flash-blackwhite{ background:radial-gradient(circle at center, rgba(255,255,255,0.10), rgba(0,0,0,0.96)); }
+  .flash-blackwhite .flash-text{
+    color:#ffffff;
+    border:1.2vh solid #ffffff;
+    text-shadow:0 0 3vh #000000, 0 0 5vh #ffffff;
+    animation:flashBlackWhite 0.18s alternate infinite;
+  }
+  .flash-gan .flash-text{
+    color:#ff3333;
+    border:1.2vh solid #000000;
+    text-shadow:0 0 3vh #000, 0 0 2vh #ff0000;
+  }
+
+  @keyframes flashGreenWhite{
+    0%{ text-shadow:0 0 2vh #33ff66,0 0 3vh #fff; transform:scale(1.03); }
+    100%{ text-shadow:0 0 4vh #fff,0 0 6vh #33ff99; transform:scale(1.10); }
+  }
+  @keyframes flashRGWhite{
+    0%{ text-shadow:0 0 2vh #ff3366,0 0 3vh #66ff66,0 0 4vh #fff; transform:scale(1.03); }
+    100%{ text-shadow:0 0 4vh #fff,0 0 6vh #ff3366,0 0 6vh #66ff66; transform:scale(1.10); }
+  }
+  @keyframes flashBlueWhite{
+    0%{ text-shadow:0 0 2vh #3377ff,0 0 3vh #ffffff; transform:scale(1.03); }
+    100%{ text-shadow:0 0 4vh #ffffff,0 0 6vh #66aaff; transform:scale(1.08); }
+  }
+  @keyframes flashBlackWhite{
+    0%{ text-shadow:0 0 2vh #000000,0 0 3vh #ffffff; transform:scale(1.03); }
+    100%{ text-shadow:0 0 4vh #ffffff,0 0 6vh #000000; transform:scale(1.08); }
+  }
+
+  /* ===============================
+     ✅ B/S/O 動畫字幕（顏色與燈一致）
+     =============================== */
+  .flash-ball{
+    background:radial-gradient(circle at center, rgba(34,197,94,0.22), rgba(0,0,0,0.96));
+  }
+  .flash-ball .flash-text{
+    color:#eaffef;
+    border:1.2vh solid #22c55e;
+    text-shadow:0 0 3vh #22c55e, 0 0 5vh #ffffff;
+    animation: bsoPop 0.18s ease-out both, bsoPulse 0.55s ease-in-out infinite;
+  }
+
+  .flash-strike{
+    background:radial-gradient(circle at center, rgba(250,204,21,0.20), rgba(0,0,0,0.96));
+  }
+  .flash-strike .flash-text{
+    color:#fff7c2;
+    border:1.2vh solid #facc15;
+    text-shadow:0 0 3vh #facc15, 0 0 5vh #ffffff;
+    animation: bsoPop 0.18s ease-out both, bsoPulse 0.55s ease-in-out infinite;
+  }
+
+  .flash-out{
+    background:radial-gradient(circle at center, rgba(239,68,68,0.24), rgba(0,0,0,0.96));
+  }
+  .flash-out .flash-text{
+    color:#ffffff;
+    border:1.2vh solid #ef4444;
+    letter-spacing:0.18em;
+    text-shadow:0 0 3vh #ef4444, 0 0 5vh #ffffff, 0 0 8vh rgba(255,0,0,0.85);
+    animation: outShake 0.18s linear infinite, outPulseBig 0.42s ease-in-out infinite;
+  }
+
+  @keyframes bsoPop{
+    0%{ transform:scale(0.92); opacity:0.0; }
+    100%{ transform:scale(1.04); opacity:1.0; }
+  }
+  @keyframes bsoPulse{
+    0%{ filter:brightness(1.0); transform:scale(1.02); }
+    50%{ filter:brightness(1.35); transform:scale(1.08); }
+    100%{ filter:brightness(1.0); transform:scale(1.02); }
+  }
+  @keyframes outShake{
+    0%{ transform:translate(0,0) scale(1.02); }
+    25%{ transform:translate(-0.6vh,0.4vh) scale(1.05); }
+    50%{ transform:translate(0.6vh,-0.4vh) scale(1.08); }
+    75%{ transform:translate(-0.4vh,-0.6vh) scale(1.05); }
+    100%{ transform:translate(0,0) scale(1.02); }
+  }
+  @keyframes outPulseBig{
+    0%{ filter:brightness(1.0); }
+    50%{ filter:brightness(1.45); }
+    100%{ filter:brightness(1.0); }
+  }
+
+  /* 左下 O + overlay */
+  .link-toggle{
+    position:fixed;
+    left:1.2vw;
+    bottom:1.4vh;
+    width:6vh; height:6vh;
+    border-radius:50%;
+    border:0.3vh solid #c4ced4;
+    background:rgba(0,0,0,0.7);
+    color:#c4ced4;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:3vh;
+    font-weight:900;
+    cursor:pointer;
+    opacity:0.2;
+    z-index:999999;
+  }
+  .overlay{
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.7);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:9999992;
+  }
+  .overlay.show{ display:flex; animation:overlayIn 0.22s ease-out; }
+  @keyframes overlayIn{ from{ transform:translateY(8vh); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+  .overlay-inner{
+    width:90vw;
+    height:90vh;
+    border-radius:2vh;
+    background:#000;
+    border:0.4vh solid rgba(196,206,212,0.9);
+    box-shadow:0 0 3vh rgba(0,0,0,0.95);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .overlay-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:1vh 1.5vw;
+    background:linear-gradient(90deg,#041e42,#020617);
+    font-size:2.4vh;
+    font-weight:700;
+    letter-spacing:0.08em;
+  }
+  .overlay-title{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .overlay-close{
+    background:transparent;
+    border:none;
+    color:#fff;
+    font-size:3vh;
+    cursor:pointer;
+  }
+
+  /* ✅ Overlay 內 iframe：不得出現瀏覽器框架感 */
+  .overlay-frame{
+    flex:1;
+    width:100%;
+    border:0 !important;
+    outline:none !important;
+    background:transparent !important;
+  }
+
+  /* ✅ 地圖開框大小：70% */
+  .map-overlay .overlay-inner{
+    width:70vw;
+    height:70vh;
+  }
+
+  /* TextOverlay */
+  .text-inner{
+    width:min(86vw, 980px);
+    height:min(78vh, 760px);
+    border-radius:2vh;
+    background:#000;
+    border:0.4vh solid rgba(196,206,212,0.9);
+    box-shadow:0 0 3vh rgba(0,0,0,0.95);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .text-body{ flex:1; display:flex; flex-direction:column; }
+  .text-area{
+    flex:1;
+    width:100%;
+    background:#000;
+    color:#fff;
+    font-size:2.6vh;
+    padding:1.5vh 1.5vw;
+    border:none;
+    outline:none;
+    resize:none;
+    line-height:1.35;
+  }
+  .text-actions{
+    display:flex;
+    gap:1vw;
+    padding:1vh 1.5vw;
+    justify-content:flex-end;
+    background:linear-gradient(90deg,#020617,#000);
+    border-top:0.2vh solid rgba(196,206,212,0.25);
+  }
+  .btn{
+    padding:0.9vh 2.2vh;
+    border-radius:999px;
+    border:0.25vh solid rgba(196,206,212,0.55);
+    background:rgba(4,30,66,0.55);
+    color:#fff;
+    font-size:2.2vh;
+    font-weight:800;
+    letter-spacing:0.08em;
+    cursor:pointer;
+  }
+  .btn:active{ transform:scale(0.98); }
+  .btn.primary{
+    border-color:rgba(39,255,148,0.85);
+    background:rgba(39,255,148,0.12);
+  }
+
+  .map-overlay{ z-index:9999991; background:rgba(0,0,0,0.8); }
+
+  /* ✅ iPad 4:3（較窄橫向）GPS/天氣區塊縮小，避免擋到比賽名稱 */
+  @media (max-aspect-ratio: 3/2){
+    .weather-top-left{ top:0.8vh !important; left:0.8vw !important; }
+    .team-top-info{
+      max-width:36vw !important;
+      font-size:1.7vh !important;
+      padding:0.45vh 0.8vw !important;
+      border-radius:1.0vh !important;
+      line-height:1.25 !important;
+      opacity:0.92;
+    }
+    #locationWeatherLine, #dateTimeLine{
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .osb-block{ gap:1.0vw; }
+    .osb-unit{ padding:0.8vh 1.6vh; }
+    .osb-letter{ font-size:clamp(4.2vh, 4.8vh, 5.4vh); }
+    .light{ width:clamp(2.3vh, 2.7vh, 3.0vh); height:clamp(2.3vh, 2.7vh, 3.0vh); }
+    #gameTimer{ font-size:4.5vh; }
+    .inning-number{ font-size:6.0vh; }
+  }
+
+  /* =========================================================
+     ✅ 首頁 X 關閉取消；其他 Overlay 保留 X（最終規則）
+     ========================================================= */
+  .stage .overlay-header,
+  .stage .overlay-close{
+    display:none !important;
+  }
+  .overlay .overlay-header{ display:flex !important; }
+  .overlay .overlay-close{ display:block !important; }
 </style>
 </head>
+
 <body>
 
-<!-- PWA INSTALL BANNER -->
-<div id="install-bar">
-  <span>📲 加入主畫面，像 App 一樣開啟！</span>
-  <button id="install-btn">安裝</button>
-  <button class="dismiss" id="install-dismiss">✕</button>
-</div>
-
-<!-- SCOREBOARD -->
-<div id="sb">
-  <div id="top-bar">
-    <div id="clock">00:00:00</div>
-    <div id="game-title">2026 中華職棒</div>
-    <div style="visibility:hidden;font-size:3vw">00:00</div>
-  </div>
-  <div id="scores-area">
-    <div class="team-col home ripple-container" id="home-col">
-      <div class="team-ha">主隊</div>
-      <div class="team-name" id="home-name">統一獅</div>
-      <div class="team-score" id="home-score">0</div>
-      <div class="pitcher-label">投手</div>
-      <div class="pitcher-name" id="home-pitcher">羅力</div>
-      <div class="score-hint" id="home-hint">單擊 +1分<br>雙擊 -1分<br>長按 修改設定</div>
+<div class="orientation-warning">
+  <div class="orientation-warning-inner">
+    <div class="orientation-warning-title">棒球記分板</div>
+    <div class="orientation-warning-text">
+      本記分板固定 16:9 橫向顯示，<br>
+      請將手機或平板旋轉為橫向後再使用。
     </div>
-    <div class="team-col away ripple-container" id="away-col">
-      <div class="team-ha">客隊</div>
-      <div class="team-name" id="away-name">中信兄弟</div>
-      <div class="team-score" id="away-score">0</div>
-      <div class="pitcher-label">投手</div>
-      <div class="pitcher-name" id="away-pitcher">陳仁和</div>
-      <div class="score-hint" id="away-hint">單擊 +1分<br>雙擊 -1分<br>長按 修改設定</div>
-    </div>
-  </div>
-  <div id="right-col">
-  <div id="center-strip">
-    <div id="inning-block">
-      <div id="inning-label">局</div>
-      <div id="inning-num">1</div>
-      <div id="inning-arrow">▲</div>
-    </div>
-    <div id="bso-block">
-      <div class="bso-row" id="bso-B">
-        <span class="bso-lbl b">B</span>
-        <div class="bso-dots">
-          <div class="dot b" data-type="b" data-idx="0"></div>
-          <div class="dot b" data-type="b" data-idx="1"></div>
-          <div class="dot b" data-type="b" data-idx="2"></div>
-        </div>
-      </div>
-      <div class="bso-row" id="bso-S">
-        <span class="bso-lbl s">S</span>
-        <div class="bso-dots">
-          <div class="dot s" data-type="s" data-idx="0"></div>
-          <div class="dot s" data-type="s" data-idx="1"></div>
-        </div>
-      </div>
-      <div class="bso-row" id="bso-O">
-        <span class="bso-lbl o">O</span>
-        <div class="bso-dots">
-          <div class="dot o" data-type="o" data-idx="0"></div>
-          <div class="dot o" data-type="o" data-idx="1"></div>
-        </div>
-      </div>
-    </div>
-    <div id="diamond-block">
-      <div id="diamond">
-        <div class="base" id="b2"></div>
-        <div class="base" id="b3"></div>
-        <div class="base" id="b1"></div>
-        <div class="base" id="bH"></div>
-      </div>
-    </div>
-  </div>
-  <div id="table-area">
-    <table id="inn-table">
-      <thead>
-        <tr>
-          <th></th>
-          <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
-          <th>6</th><th>7</th><th>8</th><th>9</th>
-          <th class="divider"></th>
-          <th class="rhe-col">R</th><th class="rhe-col">H</th><th class="rhe-col">E</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="home-row">
-          <td class="tname" id="home-tname">統一獅</td>
-          <td id="hi1"></td><td id="hi2"></td><td id="hi3"></td><td id="hi4"></td>
-          <td id="hi5"></td><td id="hi6"></td><td id="hi7"></td><td id="hi8"></td><td id="hi9"></td>
-          <td class="divider"></td>
-          <td class="score-total rhe-col" id="home-R">0</td>
-          <td class="rhe-col" id="home-H">0</td>
-          <td class="rhe-col" id="home-E">0</td>
-        </tr>
-        <tr class="away-row">
-          <td class="tname" id="away-tname">中信兄弟</td>
-          <td id="ai1"></td><td id="ai2"></td><td id="ai3"></td><td id="ai4"></td>
-          <td id="ai5"></td><td id="ai6"></td><td id="ai7"></td><td id="ai8"></td><td id="ai9"></td>
-          <td class="divider"></td>
-          <td class="score-total rhe-col" id="away-R">0</td>
-          <td class="rhe-col" id="away-H">0</td>
-          <td class="rhe-col" id="away-E">0</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <div id="ticker">
-    <div id="ticker-badge">直播</div>
-    <div id="ticker-wrap">
-      <span id="ticker-txt">歡迎收看中華職棒直播 — 長按跑馬燈可修改文字 — 左右滑動可切換局數</span>
-    </div>
-  </div>
-  </div><!-- end right-col -->
-</div><!-- end sb -->
-
-<div id="toast"></div>
-<button id="hint-btn">?</button>
-
-<!-- HELP PANEL -->
-<div id="hint-panel">
-  <div id="hint-sheet">
-    <h2>觸控操作說明</h2>
-    <div class="hint-section">
-      <h3>得分區（主隊 / 客隊）</h3>
-      <div class="hint-row"><div class="hint-icon">👆</div><div class="hint-desc"><strong>單擊</strong> → 該隊 +1 分</div></div>
-      <div class="hint-row"><div class="hint-icon">✌️</div><div class="hint-desc"><strong>雙擊</strong> → 該隊 -1 分</div></div>
-      <div class="hint-row"><div class="hint-icon">⏱️</div><div class="hint-desc"><strong>長按</strong> → 修改隊名、投手、安打、失誤、分數</div></div>
-    </div>
-    <div class="hint-section">
-      <h3>BSO 燈號</h3>
-      <div class="hint-row"><div class="hint-icon">👆</div><div class="hint-desc"><strong>單擊 B 行</strong> → 壞球 +1（3燈亮滿後第4次自動清除）</div></div>
-      <div class="hint-row"><div class="hint-icon">👆</div><div class="hint-desc"><strong>單擊 S 行</strong> → 好球 +1（2燈亮滿後第3次自動清除）</div></div>
-      <div class="hint-row"><div class="hint-icon">👆</div><div class="hint-desc"><strong>單擊 O 行</strong> → 出局 +1（第3次清除 B/S/O 全部並換局）</div></div>
-      <div class="hint-row"><div class="hint-icon">✌️</div><div class="hint-desc"><strong>雙擊 B 行</strong> → 清除壞球燈號</div></div>
-      <div class="hint-row"><div class="hint-icon">✌️</div><div class="hint-desc"><strong>雙擊 S 行</strong> → 清除好球燈號</div></div>
-      <div class="hint-row"><div class="hint-icon">✌️</div><div class="hint-desc"><strong>雙擊 O 行</strong> → 清除 B/S/O 全部燈號</div></div>
-    </div>
-    <div class="hint-section">
-      <h3>局數</h3>
-      <div class="hint-row"><div class="hint-icon">👆</div><div class="hint-desc"><strong>單擊局數</strong> → 切換上▲ / 下▽ 半局</div></div>
-      <div class="hint-row"><div class="hint-icon">✌️</div><div class="hint-desc"><strong>雙擊局數</strong> → 換局 +1</div></div>
-      <div class="hint-row"><div class="hint-icon">⏱️</div><div class="hint-desc"><strong>長按局數</strong> → 直接輸入局數</div></div>
-      <div class="hint-row"><div class="hint-icon">⬅️</div><div class="hint-desc"><strong>左滑畫面</strong> → 下一半局</div></div>
-      <div class="hint-row"><div class="hint-icon">➡️</div><div class="hint-desc"><strong>右滑畫面</strong> → 上一半局</div></div>
-    </div>
-    <div class="hint-section">
-      <h3>壘包</h3>
-      <div class="hint-row"><div class="hint-icon">👆</div><div class="hint-desc"><strong>單擊壘包位置</strong> → 切換跑者（一/二/三壘）</div></div>
-      <div class="hint-row"><div class="hint-icon">⏱️</div><div class="hint-desc"><strong>長按壘包區</strong> → 清空所有壘包</div></div>
-    </div>
-    <div class="hint-section">
-      <h3>其他</h3>
-      <div class="hint-row"><div class="hint-icon">⏱️</div><div class="hint-desc"><strong>長按跑馬燈</strong> → 修改文字與速度</div></div>
-      <div class="hint-row"><div class="hint-icon">⏱️</div><div class="hint-desc"><strong>長按標題</strong> → 修改賽事名稱</div></div>
-    </div>
-    <button class="hint-close" id="hint-close">關閉</button>
   </div>
 </div>
 
-<!-- EDIT MODAL -->
-<div id="edit-modal">
-  <div id="edit-sheet">
-    <div id="edit-title">設定</div>
-    <div id="edit-content"></div>
-    <div class="edit-btns">
-      <button class="edit-btn cancel" id="edit-cancel">取消</button>
-      <button class="edit-btn confirm" id="edit-confirm">確定</button>
+<div id="flashOverlay" class="flash-overlay">
+  <div id="flashText" class="flash-text"></div>
+</div>
+
+<!-- ✅ 地圖 Overlay：保留 X -->
+<div id="mapOverlay" class="overlay map-overlay">
+  <div class="overlay-inner">
+    <div class="overlay-header">
+      <span class="overlay-title">比賽地點地圖</span>
+      <button id="mapClose" class="overlay-close" aria-label="關閉">✕</button>
     </div>
+    <iframe id="mapFrame" class="overlay-frame" src="" loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"></iframe>
+  </div>
+</div>
+
+<!-- ✅ Link Overlay：保留 X -->
+<div id="linkOverlay" class="overlay">
+  <div class="overlay-inner">
+    <div class="overlay-header">
+      <span class="overlay-title">Ggs棒球比分</span>
+      <button id="linkClose" class="overlay-close" aria-label="關閉">✕</button>
+    </div>
+    <iframe class="overlay-frame" src="https://www.cbav.com.tw/ggs/ggsbspro2.html" loading="lazy"></iframe>
+  </div>
+</div>
+
+<!-- ✅ Text Overlay：保留 X -->
+<div id="textOverlay" class="overlay">
+  <div class="text-inner">
+    <div class="overlay-header">
+      <span id="textTitle" class="overlay-title">文字輸入</span>
+      <button id="textClose" class="overlay-close" aria-label="關閉">✕</button>
+    </div>
+    <div class="text-body">
+      <textarea id="textArea" class="text-area" spellcheck="false"></textarea>
+      <div class="text-actions">
+        <button id="textCancel" class="btn">取消</button>
+        <button id="textSave" class="btn primary">儲存</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="resetBadge" class="reset-badge" title="長按全部歸 0">0</div>
+<div id="linkToggle" class="link-toggle" title="開/關 PRO2 比分頁">o</div>
+
+<div class="stage">
+  <div class="bar" id="mainBar">
+
+    <div id="topLocationWeather" class="team-top-info weather-top-left">
+      <div id="locationWeatherLine">GPS 讀取中...</div>
+      <div id="dateTimeLine">--/--/-- (週-) --:--:--</div>
+    </div>
+
+    <div id="team1RosterPanel" class="roster-panel roster-left"></div>
+    <div id="team2RosterPanel" class="roster-panel roster-right"></div>
+
+    <div class="main-panel">
+      <div class="title-row">
+        <div id="gameTitleBox" class="game-title-box">
+          <div id="gameTitleText" class="game-title-text">棒球賽</div>
+        </div>
+      </div>
+
+      <div class="top-row">
+        <div class="team-column team1-column">
+          <div class="team1-block" id="team1Block">
+            <div id="team1Name" class="team-name">復旦高中</div>
+            <div id="team1ScoreArea" class="score-box">
+              <div id="score1" class="score-number">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="team-column team2-column">
+          <div class="team2-block" id="team2Block">
+            <div id="team2ScoreArea" class="score-box">
+              <div id="score2" class="score-number">0</div>
+            </div>
+            <div id="team2Name" class="team-name team2-name">復旦高中</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bottom-row">
+        <div class="center-block">
+          <div id="inningBox" class="inning-box">
+            <div id="inningNumber" class="inning-number">1</div>
+            <div id="halfIndicator" class="half-indicator top">▲</div>
+          </div>
+
+          <div class="bases-wrapper">
+            <div id="base1" class="base"></div>
+            <div id="base2" class="base"></div>
+            <div id="base3" class="base"></div>
+          </div>
+
+          <div class="pitch-clock">
+            <div class="game-box">
+              <span id="gameTimer" title="單擊：計時/停止；雙擊：歸零">00:00:00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="osb-block">
+          <div id="ballsArea" class="osb-unit">
+            <div class="osb-letter">B</div>
+            <div id="ballsLights" class="osb-lights"></div>
+          </div>
+          <div id="strikesArea" class="osb-unit">
+            <div class="osb-letter">S</div>
+            <div id="strikesLights" class="osb-lights"></div>
+          </div>
+          <div id="outsArea" class="osb-unit">
+            <div class="osb-letter">O</div>
+            <div id="outsLights" class="osb-lights"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bp-row">
+        <div id="bp1Box" class="bp-box bp-left mode-pitcher" title="滑動換打者；雙擊切換 打者/投手；長按可改投手名">
+          <div id="bp1ArrowUp" class="bp-arrow">▲</div>
+          <div class="bp-main">
+            <div id="bp1Label" class="bp-label">投手</div>
+            <div id="bp1Name" class="bp-name">-</div>
+          </div>
+          <div id="bp1ArrowDown" class="bp-arrow">▼</div>
+        </div>
+
+        <div id="bp2Box" class="bp-box bp-right mode-pitcher" title="滑動換打者；雙擊切換 打者/投手；長按可改投手名">
+          <div id="bp2ArrowUp" class="bp-arrow">▲</div>
+          <div class="bp-main">
+            <div id="bp2Label" class="bp-label">投手</div>
+            <div id="bp2Name" class="bp-name">-</div>
+          </div>
+          <div id="bp2ArrowDown" class="bp-arrow">▼</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-copyright">© 2025 Ggs 怪機絲 Baseball Scoreboard 02-2378-2712</div>
   </div>
 </div>
 
 <script>
-/* ── STATE ── */
-const state = {
-  inning:1, isTop:true,
-  balls:0, strikes:0, outs:0,
-  bases:[false,false,false],
-  home:{name:'統一獅',score:0,pitcher:'羅力',h:0,e:0,innings:Array(9).fill(null)},
-  away:{name:'中信兄弟',score:0,pitcher:'陳仁和',h:0,e:0,innings:Array(9).fill(null)},
-  gameTitle:'2026 中華職棒',
-  ticker:'歡迎收看中華職棒直播 — 長按跑馬燈可修改文字 — 左右滑動可切換局數',
-  tickerSpeed:30,
+const STORAGE_KEY = "scoreboard_16x9_worldcup_zh_v1";
+const WEEKDAY_ZH = ["日","一","二","三","四","五","六"];
+
+let state = {
+  gameTitle: "棒球賽",
+  team1Name: "復旦高中",
+  team2Name: "復旦高中",
+  score1: 0,
+  score2: 0,
+  inning: 1,
+  half: "top",
+  balls: 0,
+  strikes: 0,
+  outs: 0,
+  bases: 0,
+  team1Pitcher: "林O豪",
+  team2Pitcher: "林O廷",
+  team1Roster: [
+    { order: "1", name: "林O豪", pos: "中外野" },
+    { order: "2", name: "張O翔", pos: "游擊" },
+    { order: "3", name: "李O恩", pos: "一壘" },
+    { order: "4", name: "陳O宇", pos: "指定打擊" },
+    { order: "5", name: "黃O宇", pos: "三壘" },
+    { order: "6", name: "吳O翰", pos: "左外野" },
+    { order: "7", name: "邱O宏", pos: "右外野" },
+    { order: "8", name: "趙O安", pos: "二壘" },
+    { order: "9", name: "周O傑", pos: "捕手" }
+  ],
+  team2Roster: [
+    { order: "1", name: "林0廷", pos: "中外野" },
+    { order: "2", name: "郭O豪", pos: "二壘" },
+    { order: "3", name: "王O翔", pos: "右外野" },
+    { order: "4", name: "曾O維", pos: "指定打擊" },
+    { order: "5", name: "楊文仁", pos: "一壘" },
+    { order: "6", name: "陳O安", pos: "三壘" },
+    { order: "7", name: "許O盛", pos: "左外野" },
+    { order: "8", name: "吳O毅", pos: "捕手" },
+    { order: "9", name: "邱O元", pos: "游擊" }
+  ],
+  bp1Mode: "P",
+  bp2Mode: "P",
+  bp1Index: 0,
+  bp2Index: 0
 };
 
-/* ── RENDER ── */
-function render(){
-  document.getElementById('home-score').textContent=state.home.score;
-  document.getElementById('away-score').textContent=state.away.score;
-  document.getElementById('home-name').textContent=state.home.name;
-  document.getElementById('away-name').textContent=state.away.name;
-  document.getElementById('home-pitcher').textContent=state.home.pitcher;
-  document.getElementById('away-pitcher').textContent=state.away.pitcher;
-  document.getElementById('home-tname').textContent=state.home.name;
-  document.getElementById('away-tname').textContent=state.away.name;
-  document.getElementById('game-title').textContent=state.gameTitle;
-  document.getElementById('inning-num').textContent=state.inning;
-  document.getElementById('inning-arrow').textContent=state.isTop?'▲':'▽';
-  ['b','s','o'].forEach(t=>{
-    const cnt=t==='b'?state.balls:t==='s'?state.strikes:state.outs;
-    document.querySelectorAll('.dot.'+t).forEach((d,i)=>d.classList.toggle('on',i<cnt));
-  });
-  ['b1','b2','b3'].forEach((id,i)=>document.getElementById(id).classList.toggle('on',state.bases[i]));
-  for(let i=0;i<9;i++){
-    const cur=(i===state.inning-1);
-    const hv=state.home.innings[i]; const av=state.away.innings[i];
-    const hc=document.getElementById('hi'+(i+1)); const ac=document.getElementById('ai'+(i+1));
-    hc.textContent=hv!==null?hv:''; hc.className=cur?'cur-inn':'';
-    ac.textContent=av!==null?av:''; ac.className=cur?'cur-inn':'';
+let gameSeconds = 0;
+let gameRunning = false;
+let gameTimerId = null;
+
+let showRoster1 = false;
+let showRoster2 = false;
+
+let mapLocationQuery = "";
+
+/* ✅ 記憶：上一個 B/S/O（避免重複跳字幕） */
+let __lastBalls = 0;
+let __lastStrikes = 0;
+let __lastOuts = 0;
+
+/* ===== 隊名字體自動縮放（強制不出 ...）===== */
+function fitOneTeamName(el, baseVh=10, minVh=5.2){
+  if(!el) return;
+  const parent = el.parentElement;
+  if(!parent) return;
+
+  el.style.fontSize = baseVh + "vh";
+  const maxLoops = 40;
+  let loops = 0;
+
+  const vhPx = window.innerHeight / 100;
+  let cur = baseVh * vhPx;
+  const minPx = minVh * vhPx;
+
+  void el.offsetWidth;
+
+  while(el.scrollWidth > el.clientWidth && cur > minPx && loops < maxLoops){
+    cur *= 0.95;
+    el.style.fontSize = cur + "px";
+    loops++;
   }
-  document.getElementById('home-R').textContent=state.home.score;
-  document.getElementById('away-R').textContent=state.away.score;
-  document.getElementById('home-H').textContent=state.home.h;
-  document.getElementById('away-H').textContent=state.away.h;
-  document.getElementById('home-E').textContent=state.home.e;
-  document.getElementById('away-E').textContent=state.away.e;
-  const tt=document.getElementById('ticker-txt');
-  tt.textContent=state.ticker; tt.style.animationDuration=state.tickerSpeed+'s';
+}
+function fitTeamNames(){
+  fitOneTeamName(document.getElementById("team1Name"), 10, 5.2);
+  fitOneTeamName(document.getElementById("team2Name"), 10, 5.2);
 }
 
-/* ── TOAST ── */
-let toastT;
-function toast(msg,dur=1400){
-  const t=document.getElementById('toast');
-  t.textContent=msg; t.style.opacity=1;
-  clearTimeout(toastT); toastT=setTimeout(()=>t.style.opacity=0,dur);
+/* ===== 全螢幕（雙擊螢幕）===== */
+function isAnyOverlayOpen(){
+  const ids=["mapOverlay","linkOverlay","textOverlay"];
+  return ids.some(id=>{
+    const el=document.getElementById(id);
+    return el && el.classList.contains("show");
+  });
 }
+function requestFullscreenSafe(target){
+  try{
+    const el = target || document.documentElement;
+    const fn = el.requestFullscreen || el.webkitRequestFullscreen || el.msRequestFullscreen;
+    if(fn) fn.call(el);
+  }catch(e){}
+}
+function bindDoubleTapFullscreen(){
+  const root = document.getElementById("mainBar") || document.body;
 
-/* ── FLASH ── */
-function flash(el,cls){el.classList.remove('flash-g','flash-y','flash-r');void el.offsetWidth;el.classList.add(cls);setTimeout(()=>el.classList.remove(cls),400);}
+  document.addEventListener("dblclick",()=>{
+    if(isAnyOverlayOpen()) return;
+    requestFullscreenSafe(document.documentElement);
+  }, {passive:true});
 
-/* ── RIPPLE ── */
-function ripple(el,x,y){
-  const r=document.createElement('div'); r.className='ripple';
-  const rect=el.getBoundingClientRect(); const sz=Math.max(rect.width,rect.height)*2;
-  r.style.cssText=`width:${sz}px;height:${sz}px;left:${x-rect.left-sz/2}px;top:${y-rect.top-sz/2}px`;
-  el.appendChild(r); setTimeout(()=>r.remove(),500);
-}
-
-/* ── INNING ── */
-function nextHalf(){
-  if(state.isTop){state.isTop=false;}
-  else{state.isTop=true;state.inning=Math.min(state.inning+1,20);}
-  state.balls=0;state.strikes=0;state.outs=0;state.bases=[false,false,false];
-  toast(state.inning+'局 '+(state.isTop?'上':'下')+'半');render();
-}
-function prevHalf(){
-  if(!state.isTop){state.isTop=true;}
-  else if(state.inning>1){state.inning--;state.isTop=false;}
-  state.balls=0;state.strikes=0;state.outs=0;state.bases=[false,false,false];
-  toast(state.inning+'局 '+(state.isTop?'上':'下')+'半');render();
-}
-function addScore(team,d){
-  const t=state[team]; t.score=Math.max(0,t.score+d);
-  const inn=state.inning-1;
-  if(inn>=0&&inn<9){if(t.innings[inn]===null)t.innings[inn]=0;t.innings[inn]=Math.max(0,(t.innings[inn]||0)+d);}
-  render();
-}
-
-/* ── GESTURE FACTORY ── */
-function mkGesture(el,{onTap,onDoubleTap,onLongPress,onSwipeLeft,onSwipeRight}={}){
-  let sx,sy,st,timer=null,lastTap=0,moved=false;
-  const LONG=600,DBL=280,MOVE=12;
-  function cancel(){clearTimeout(timer);timer=null;}
-  el.addEventListener('touchstart',e=>{
-    const t=e.touches[0]; sx=t.clientX;sy=t.clientY;st=Date.now();moved=false;
-    timer=setTimeout(()=>{if(!moved){timer=null;if(onLongPress)onLongPress(e,sx,sy);}},LONG);
-  },{passive:true});
-  el.addEventListener('touchmove',e=>{
-    const t=e.touches[0];
-    if(Math.abs(t.clientX-sx)>MOVE||Math.abs(t.clientY-sy)>MOVE){moved=true;cancel();}
-  },{passive:true});
-  el.addEventListener('touchend',e=>{
-    if(timer){cancel();}
-    if(moved){
-      const dx=e.changedTouches[0].clientX-sx,dy=Math.abs(e.changedTouches[0].clientY-sy);
-      if(Math.abs(dx)>45&&dy<70){
-        if(dx<0&&onSwipeLeft)onSwipeLeft(e);
-        if(dx>0&&onSwipeRight)onSwipeRight(e);
-      }return;
+  let lastTap=0;
+  root.addEventListener("touchend",(e)=>{
+    if(isAnyOverlayOpen()) return;
+    if(e.changedTouches && e.changedTouches.length>=2) return;
+    const now=Date.now();
+    if(now-lastTap < 280){
+      lastTap=0;
+      requestFullscreenSafe(document.documentElement);
+      return;
     }
-    const now=Date.now(),gap=now-lastTap;
-    if(gap<DBL&&gap>0){lastTap=0;if(onDoubleTap)onDoubleTap(e,sx,sy);}
-    else{lastTap=now;setTimeout(()=>{if(lastTap===now){lastTap=0;if(onTap)onTap(e,sx,sy);}},DBL);}
-  },{passive:true});
+    lastTap=now;
+  }, {passive:true});
 }
 
-/* ── EDIT MODAL ── */
-let editCb=null;
-function openEdit(title,fields,cb){
-  editCb=cb;
-  document.getElementById('edit-title').textContent=title;
-  const c=document.getElementById('edit-content'); c.innerHTML='';
-  fields.forEach(f=>{
-    const row=document.createElement('div'); row.className='edit-row';
-    row.innerHTML=`<span class="edit-lbl">${f.label}</span><input class="edit-inp" id="ef-${f.key}" type="${f.type||'text'}" value="${f.value!==undefined?f.value:''}" placeholder="${f.placeholder||''}" inputmode="${f.inputmode||'text'}">`;
-    c.appendChild(row);
-  });
-  document.getElementById('edit-modal').classList.add('open');
-  setTimeout(()=>c.querySelector('input')?.focus(),100);
+/* ===== 背景透明度（雙指上下滑動） ===== */
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function setBarBgOpacity(v){
+  const bar = document.getElementById("mainBar");
+  if (!bar) return;
+  const val = clamp(v, 0, 1);
+  bar.style.setProperty("--barBgOpacity", val.toFixed(3));
+  try{ localStorage.setItem("barBgOpacity", String(val)); }catch(e){}
 }
-document.getElementById('edit-confirm').onclick=()=>{
-  if(editCb){const r={};document.querySelectorAll('#edit-content .edit-inp').forEach(i=>r[i.id.replace('ef-','')]=i.value);editCb(r);}
-  document.getElementById('edit-modal').classList.remove('open');
-};
-document.getElementById('edit-cancel').onclick=()=>document.getElementById('edit-modal').classList.remove('open');
-document.getElementById('edit-modal').addEventListener('touchend',e=>{if(e.target===document.getElementById('edit-modal'))document.getElementById('edit-modal').classList.remove('open');});
+function loadBarBgOpacity(){
+  try{
+    const v = parseFloat(localStorage.getItem("barBgOpacity"));
+    if (!isNaN(v)) setBarBgOpacity(v);
+  }catch(e){}
+}
+function bindBgOpacityGesture(){
+  const bar = document.getElementById("mainBar");
+  if (!bar) return;
 
-/* ── HINT PANEL ── */
-document.getElementById('hint-btn').onclick=()=>document.getElementById('hint-panel').classList.add('open');
-document.getElementById('hint-close').onclick=()=>document.getElementById('hint-panel').classList.remove('open');
-document.getElementById('hint-panel').addEventListener('touchend',e=>{if(e.target===document.getElementById('hint-panel'))document.getElementById('hint-panel').classList.remove('open');});
+  loadBarBgOpacity();
 
-/* ── SCORE AREA ── */
-['home','away'].forEach(team=>{
-  const col=document.getElementById(team+'-col');
-  const hint=document.getElementById(team+'-hint');
-  mkGesture(col,{
-    onTap(e,x,y){ripple(col,x,y);addScore(team,+1);flash(col,team==='home'?'flash-g':'flash-y');toast(state[team].name+' +1 → '+state[team].score);},
-    onDoubleTap(e,x,y){ripple(col,x,y);addScore(team,-1);toast(state[team].name+' -1 → '+state[team].score);},
-    onLongPress(){
-      openEdit((team==='home'?'主隊':'客隊')+'設定',[
-        {key:'name',label:'隊名',value:state[team].name},
-        {key:'pitcher',label:'投手',value:state[team].pitcher},
-        {key:'h',label:'安打 H',value:state[team].h,type:'number',inputmode:'numeric'},
-        {key:'e',label:'失誤 E',value:state[team].e,type:'number',inputmode:'numeric'},
-        {key:'score',label:'當前分數',value:state[team].score,type:'number',inputmode:'numeric'},
-      ],r=>{
-        state[team].name=r.name||state[team].name;
-        state[team].pitcher=r.pitcher||state[team].pitcher;
-        state[team].h=parseInt(r.h)||0;state[team].e=parseInt(r.e)||0;
-        const s=parseInt(r.score);if(!isNaN(s))state[team].score=Math.max(0,s);
-        render();
-      });
-    },
-  });
-  // Brief hint on load
-  setTimeout(()=>{hint.style.opacity=1;setTimeout(()=>hint.style.opacity=0,2200);},(team==='home'?600:900));
-});
+  let active=false, startY=0, startOpacity=1;
+  const getAvgY = (t1,t2)=>(t1.clientY+t2.clientY)/2;
 
-/* ── INNING BLOCK ── */
-mkGesture(document.getElementById('inning-block'),{
-  onTap(){state.isTop=!state.isTop;state.balls=0;state.strikes=0;state.outs=0;toast(state.inning+'局 '+(state.isTop?'上':'下')+'半');render();},
-  onDoubleTap(){nextHalf();},
-  onLongPress(){openEdit('局數設定',[{key:'inning',label:'局數',value:state.inning,type:'number',inputmode:'numeric'}],r=>{const n=parseInt(r.inning);if(n>=1&&n<=20){state.inning=n;render();}});},
-});
-
-/* ── BSO ── */
-// 單擊各 row 加燈；雙擊各 row 清除該行
-// B: 3燈，第4次點擊清除；S: 2燈，第3次點擊清除；O: 第3次點擊清除B+S+O全部
-function checkOuts(){if(state.outs>=3){state.outs=0;state.balls=0;state.strikes=0;state.bases=[false,false,false];setTimeout(nextHalf,400);}}
-
-['B','S','O'].forEach(t=>{
-  const row=document.getElementById('bso-'+t);if(!row)return;
-  const flashCls=t==='B'?'flash-g':t==='S'?'flash-y':'flash-r';
-  mkGesture(row,{
-    onTap(){
-      if(t==='B'){
-        state.balls++;
-        if(state.balls>=4){state.balls=0;toast('四壞球 — 打者上壘！');}
-        else{flash(row,flashCls);}
-      }else if(t==='S'){
-        state.strikes++;
-        if(state.strikes>=3){state.strikes=0;toast('三振出局！');flash(row,flashCls);state.outs++;checkOuts();}
-        else{flash(row,flashCls);}
-      }else{
-        state.outs++;
-        if(state.outs>=3){flash(row,flashCls);checkOuts();}
-        else{flash(row,flashCls);}
-      }
-      render();
-    },
-    onDoubleTap(){
-      if(t==='B'){state.balls=0;toast('壞球 清除');}
-      else if(t==='S'){state.strikes=0;toast('好球 清除');}
-      else{state.outs=0;state.balls=0;state.strikes=0;toast('出局 — BSO 全清');}
-      render();
+  bar.addEventListener("touchstart",(e)=>{
+    if(e.touches && e.touches.length===2){
+      active=true;
+      startY=getAvgY(e.touches[0],e.touches[1]);
+      const cur=parseFloat(getComputedStyle(bar).getPropertyValue("--barBgOpacity"))||1;
+      startOpacity=cur;
     }
-  });
-});
-mkGesture(document.getElementById('bso-block'),{onDoubleTap(){state.balls=0;state.strikes=0;state.outs=0;toast('BSO 全清');render();}});
+  },{passive:true});
 
-/* ── BASES ── */
-document.getElementById('diamond-block').addEventListener('touchend',e=>{
-  const t=e.changedTouches[0],rect=document.getElementById('diamond-block').getBoundingClientRect();
-  const rx=(t.clientX-rect.left)/rect.width,ry=(t.clientY-rect.top)/rect.height;
-  let hit=-1;
-  if(ry<0.45)hit=1;else if(ry>=0.35&&rx<0.45)hit=2;else if(ry>=0.35&&rx>0.55)hit=0;
-  if(hit>=0){state.bases[hit]=!state.bases[hit];toast(['一壘','二壘','三壘'][hit]+(state.bases[hit]?' 上壘':' 離壘'));render();}
-},{passive:true});
-mkGesture(document.getElementById('diamond-block'),{onLongPress(){state.bases=[false,false,false];toast('壘包清空');render();}});
+  bar.addEventListener("touchmove",(e)=>{
+    if(!active) return;
+    if(!e.touches || e.touches.length!==2) return;
+    e.preventDefault();
+    const y=getAvgY(e.touches[0],e.touches[1]);
+    const dy=y-startY;
+    const next=startOpacity-(dy/400);
+    setBarBgOpacity(next);
+  },{passive:false});
 
-/* ── GLOBAL SWIPE ── */
-mkGesture(document.getElementById('sb'),{onSwipeLeft:nextHalf,onSwipeRight:prevHalf});
+  const end=()=>{ active=false; };
+  bar.addEventListener("touchend",end,{passive:true});
+  bar.addEventListener("touchcancel",end,{passive:true});
+}
 
-/* ── TICKER ── */
-mkGesture(document.getElementById('ticker'),{onLongPress(){
-  openEdit('跑馬燈設定',[
-    {key:'ticker',label:'文字',value:state.ticker,placeholder:'跑馬燈內容...'},
-    {key:'speed',label:'速度(秒)',value:state.tickerSpeed,type:'number',inputmode:'numeric'},
-  ],r=>{if(r.ticker)state.ticker=r.ticker;const s=parseInt(r.speed);if(s>0)state.tickerSpeed=s;render();});
-}});
-
-/* ── TITLE ── */
-mkGesture(document.getElementById('game-title'),{onLongPress(){
-  openEdit('賽事名稱',[{key:'title',label:'名稱',value:state.gameTitle}],r=>{if(r.title)state.gameTitle=r.title;render();});
-}});
-
-/* ── CLOCK ── */
-function updateClock(){const n=new Date(),h=String(n.getHours()).padStart(2,'0'),m=String(n.getMinutes()).padStart(2,'0'),s=String(n.getSeconds()).padStart(2,'0');document.getElementById('clock').textContent=h+':'+m+':'+s;}
-updateClock();setInterval(updateClock,1000);
-
-/* ── PREVENT DEFAULTS ── */
-document.addEventListener('contextmenu',e=>e.preventDefault());
-let lastTE=0;
-document.addEventListener('touchend',e=>{const n=Date.now();if(n-lastTE<300)e.preventDefault();lastTE=n;},{passive:false});
-
-/* ══════════════════════════════════════════════
-   PWA — Manifest & Service Worker (inline/blob)
-══════════════════════════════════════════════ */
-
-// 1. Generate App Icon (SVG → data URI)
-const iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="80" fill="#060a14"/>
-  <rect x="10" y="10" width="492" height="492" rx="74" fill="none" stroke="#1a3f6a" stroke-width="4"/>
-  <!-- baseball seam circle -->
-  <circle cx="256" cy="256" r="180" fill="none" stroke="#1a3f6a" stroke-width="3"/>
-  <!-- HOME team score -->
-  <text x="130" y="200" text-anchor="middle" font-family="Arial Black,sans-serif" font-size="120" font-weight="900" fill="#60d0ff">3</text>
-  <!-- AWAY team score -->
-  <text x="382" y="200" text-anchor="middle" font-family="Arial Black,sans-serif" font-size="120" font-weight="900" fill="#ff8080">2</text>
-  <!-- divider -->
-  <line x1="256" y1="90" x2="256" y2="290" stroke="#f0c040" stroke-width="4"/>
-  <!-- inning -->
-  <text x="256" y="360" text-anchor="middle" font-family="Arial Black,sans-serif" font-size="60" font-weight="900" fill="#f0c040">7▲</text>
-  <!-- BSO dots -->
-  <circle cx="176" cy="420" r="16" fill="#50dd50"/>
-  <circle cx="216" cy="420" r="16" fill="#50dd50"/>
-  <circle cx="256" cy="420" r="16" fill="#50dd50"/>
-  <circle cx="296" cy="420" r="16" fill="none" stroke="#50dd50" stroke-width="3"/>
-  <circle cx="336" cy="420" r="16" fill="#f0c040"/>
-  <circle cx="296" cy="450" r="16" fill="none" stroke="#ff6644" stroke-width="3"/>
-  <circle cx="336" cy="450" r="16" fill="none" stroke="#ff6644" stroke-width="3"/>
-</svg>`;
-const iconDataURI = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(iconSVG)));
-
-// 2. Build manifest object
-const manifest = {
-  name: '棒球計分板',
-  short_name: '計分板',
-  description: '棒球直播計分板 — 觸控操作',
-  start_url: location.href,
-  display: 'standalone',
-  orientation: 'portrait',
-  background_color: '#000000',
-  theme_color: '#000000',
-  icons: [
-    { src: iconDataURI, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
-  ]
-};
-const manifestBlob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
-const manifestURL = URL.createObjectURL(manifestBlob);
-document.getElementById('pwa-manifest') && (()=>{
-  const link = document.createElement('link');
-  link.rel = 'manifest'; link.href = manifestURL;
-  document.head.appendChild(link);
+/* ===== TextOverlay ===== */
+let __textCb=null;
+function openTextOverlay(title,value,cb){
+  const ov=document.getElementById("textOverlay");
+  const t=document.getElementById("textTitle");
+  const a=document.getElementById("textArea");
+  if(!ov||!t||!a) return;
+  __textCb=cb||null;
+  t.textContent=title||"文字輸入";
+  a.value=(value==null)?"":String(value);
+  ov.classList.add("show");
+  requestAnimationFrame(()=>{ a.focus(); try{a.setSelectionRange(a.value.length,a.value.length);}catch(e){} });
+}
+function closeTextOverlay(){
+  const ov=document.getElementById("textOverlay");
+  if(!ov) return;
+  ov.classList.remove("show");
+  __textCb=null;
+}
+function saveTextOverlay(){
+  const a=document.getElementById("textArea");
+  const val=a?a.value:"";
+  const cb=__textCb;
+  closeTextOverlay();
+  if(cb) cb(val);
+}
+(function(){
+  const ov=document.getElementById("textOverlay");
+  const closeBtn=document.getElementById("textClose");
+  const cancelBtn=document.getElementById("textCancel");
+  const saveBtn=document.getElementById("textSave");
+  if(closeBtn) closeBtn.addEventListener("click",closeTextOverlay);
+  if(cancelBtn) cancelBtn.addEventListener("click",closeTextOverlay);
+  if(saveBtn) saveBtn.addEventListener("click",saveTextOverlay);
+  if(ov) ov.addEventListener("click",(e)=>{ if(e.target===ov) closeTextOverlay(); });
+  const a=document.getElementById("textArea");
+  if(a){
+    a.addEventListener("keydown",(e)=>{
+      if((e.ctrlKey||e.metaKey)&&e.key==="Enter"){ e.preventDefault(); saveTextOverlay(); }
+      if(e.key==="Escape"){ e.preventDefault(); closeTextOverlay(); }
+    });
+  }
 })();
-// Also set apple touch icon
-const iconLink = document.createElement('link');
-iconLink.rel = 'apple-touch-icon'; iconLink.href = iconDataURI;
-document.head.appendChild(iconLink);
 
-// 3. Register Service Worker (inline via Blob)
-const swCode = `
-const CACHE = 'baseball-v1';
-const HTML = ${JSON.stringify(document.documentElement.outerHTML)};
-self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.put('/', new Response(HTML, {headers:{'Content-Type':'text/html;charset=utf-8'}}))));
-  self.skipWaiting();
-});
-self.addEventListener('activate', e => { e.waitUntil(self.clients.claim()); });
-self.addEventListener('fetch', e => {
-  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('/'))));
-});
-`;
-if ('serviceWorker' in navigator) {
-  const swBlob = new Blob([swCode], {type:'text/javascript'});
-  const swURL = URL.createObjectURL(swBlob);
-  navigator.serviceWorker.register(swURL, {scope: '/'}).then(reg => {
-    console.log('SW registered:', reg.scope);
-  }).catch(err => {
-    // Blob SW might be blocked on some browsers — that's OK, app still works online
-    console.warn('SW registration skipped:', err.message);
+/* ===== Flash ===== */
+let flashTimer=null;
+function clearFlashClasses(overlay){
+  overlay.classList.remove(
+    "flash-greenwhite","flash-rgwhite","flash-bluewhite","flash-blackwhite","flash-gan",
+    "flash-ball","flash-strike","flash-out"
+  );
+}
+function showFlash(text,mode,durationMs){
+  const overlay=document.getElementById("flashOverlay");
+  const flashText=document.getElementById("flashText");
+  if(!overlay||!flashText) return;
+  clearFlashClasses(overlay);
+  if(mode) overlay.classList.add(mode);
+  flashText.textContent=text;
+  overlay.removeAttribute("data-tag");
+  overlay.style.display="flex";
+  if(flashTimer) clearTimeout(flashTimer);
+  flashTimer=setTimeout(()=>{ overlay.style.display="none"; overlay.removeAttribute("data-tag"); }, durationMs);
+}
+function toggleFlashSticky(tag,text,mode){
+  const overlay=document.getElementById("flashOverlay");
+  const flashText=document.getElementById("flashText");
+  if(!overlay||!flashText) return;
+  const currentTag=overlay.getAttribute("data-tag");
+  const isVisible=overlay.style.display==="flex";
+  if(isVisible && currentTag===tag){
+    overlay.style.display="none";
+    overlay.removeAttribute("data-tag");
+    if(flashTimer){ clearTimeout(flashTimer); flashTimer=null; }
+    return;
+  }
+  clearFlashClasses(overlay);
+  if(mode) overlay.classList.add(mode);
+  flashText.textContent=text;
+  overlay.setAttribute("data-tag",tag);
+  overlay.style.display="flex";
+  if(flashTimer){ clearTimeout(flashTimer); flashTimer=null; }
+}
+
+/* ===== Map ===== */
+function showMapOverlay(){
+  const overlay=document.getElementById("mapOverlay");
+  const frame=document.getElementById("mapFrame");
+  if(!overlay||!frame) return;
+  const query=mapLocationQuery || state.gameTitle || "棒球場";
+  frame.src=`https://www.google.com/maps?q=${encodeURIComponent(query)}&hl=zh-TW&z=15&output=embed`;
+  overlay.classList.add("show");
+}
+function hideMapOverlay(){
+  const overlay=document.getElementById("mapOverlay");
+  const frame=document.getElementById("mapFrame");
+  if(!overlay||!frame) return;
+  overlay.classList.remove("show");
+  frame.src="";
+}
+
+/* ===== State ===== */
+function loadState(){
+  try{
+    const saved=localStorage.getItem(STORAGE_KEY);
+    if(saved) state=Object.assign(state, JSON.parse(saved));
+  }catch(e){}
+  if(!state.bp1Mode) state.bp1Mode="P";
+  if(!state.bp2Mode) state.bp2Mode="P";
+  if(typeof state.bp1Index!=="number") state.bp1Index=0;
+  if(typeof state.bp2Index!=="number") state.bp2Index=0;
+}
+function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+
+/* ===== Clock ===== */
+function updateClock(){
+  const dtLine=document.getElementById("dateTimeLine");
+  const now=new Date();
+  const y=now.getFullYear();
+  const m=String(now.getMonth()+1).padStart(2,"0");
+  const d=String(now.getDate()).padStart(2,"0");
+  const hh=String(now.getHours()).padStart(2,"0");
+  const mm=String(now.getMinutes()).padStart(2,"0");
+  const ss=String(now.getSeconds()).padStart(2,"0");
+  const w=WEEKDAY_ZH[now.getDay()];
+  if(dtLine) dtLine.textContent=`${y}/${m}/${d} (週${w}) ${hh}:${mm}:${ss}`;
+}
+
+/* ===== Game timer ===== */
+function formatGameTime(sec){
+  const h=Math.floor(sec/3600);
+  const m=Math.floor((sec%3600)/60);
+  const s=sec%60;
+  return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
+function renderGameTimer(){
+  const el=document.getElementById("gameTimer");
+  if(!el) return;
+  el.textContent=formatGameTime(gameSeconds);
+  el.classList.toggle("running", gameRunning);
+}
+function startGameTimer(){
+  if(gameRunning) return;
+  gameRunning=true;
+  renderGameTimer();
+  gameTimerId=setInterval(()=>{ gameSeconds++; renderGameTimer(); },1000);
+}
+function stopGameTimer(){
+  if(!gameRunning) return;
+  gameRunning=false;
+  renderGameTimer();
+  if(gameTimerId){ clearInterval(gameTimerId); gameTimerId=null; }
+}
+function resetGameTimer(){ gameSeconds=0; renderGameTimer(); }
+
+/* ===== Gestures ===== */
+function addLongPress(el,onPress){
+  if(!el) return;
+  let pressTimer=null;
+  const start=()=>{
+    if(pressTimer) return;
+    pressTimer=setTimeout(()=>{ pressTimer=null; onPress&&onPress(); },550);
+  };
+  const cancel=()=>{
+    if(pressTimer){ clearTimeout(pressTimer); pressTimer=null; }
+  };
+  ["mousedown","touchstart"].forEach(e=>el.addEventListener(e,start,{passive:true}));
+  ["mouseup","mouseleave","touchend","touchcancel"].forEach(e=>el.addEventListener(e,cancel,{passive:true}));
+}
+function addTapHandler(el,onSingle,onDouble){
+  if(!el) return;
+  let timer=null;
+  el.addEventListener("click",()=>{
+    if(timer){ clearTimeout(timer); timer=null; onDouble&&onDouble(); }
+    else{ timer=setTimeout(()=>{ timer=null; onSingle&&onSingle(); },220); }
+  });
+}
+function addSwipeHandler(el,onSwipeLeft,onSwipeRight){
+  if(!el) return;
+  let startX=0,startY=0;
+  el.addEventListener("touchstart",(e)=>{
+    const t=e.touches[0];
+    startX=t.clientX; startY=t.clientY;
+  },{passive:true});
+  el.addEventListener("touchend",(e)=>{
+    const t=e.changedTouches[0];
+    const dx=t.clientX-startX;
+    const dy=t.clientY-startY;
+    if(Math.abs(dx)>40 && Math.abs(dx)>Math.abs(dy)){
+      if(dx<0) onSwipeLeft&&onSwipeLeft();
+      else onSwipeRight&&onSwipeRight();
+    }
+  },{passive:true});
+}
+
+/* ===== BSO ===== */
+function renderLights(container,count,max,type){
+  if(!container) return;
+  container.innerHTML="";
+  for(let i=0;i<max;i++){
+    const d=document.createElement("div");
+    d.className="light";
+    if(i<count){
+      if(type==="b") d.classList.add("on-ball");
+      if(type==="s") d.classList.add("on-strike");
+      if(type==="o") d.classList.add("on-out");
+    }
+    container.appendChild(d);
+  }
+}
+
+/* ================================
+   ✅ 投手改名（名單面板紅框列長按）
+   - 不開新頁，只開 TextOverlay
+   - 改完 renderAll() 讓外部投手欄位同步
+   ================================ */
+function editPitcher(teamNo){
+  const pitcherKey = teamNo===1 ? "team1Pitcher" : "team2Pitcher";
+  const teamName   = teamNo===1 ? state.team1Name : state.team2Name;
+
+  openTextOverlay(`${teamName} 投手名字`, state[pitcherKey]||"", (pval)=>{
+    const v = String(pval ?? "").trim();
+    if(!v) return;
+    state[pitcherKey] = v;
+    saveState();
+    renderAll(); // ✅ 全連動
   });
 }
 
-// 4. PWA Install Prompt (Android Chrome)
-let deferredPrompt = null;
-const installBar = document.getElementById('install-bar');
-const installBtn = document.getElementById('install-btn');
-const dismissBtn = document.getElementById('install-dismiss');
+/* ===== Rosters ===== */
+function fillRosterPanel(panel, teamNo, teamName, pitcherName, rosterArr){
+  panel.innerHTML="";
+  const header=document.createElement("div");
+  header.className="roster-header";
+  header.innerHTML=`<div class="roster-team">${teamName}</div><div class="roster-sub">球員名單</div>`;
+  panel.appendChild(header);
 
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredPrompt = e;
-  installBar.classList.add('show');
-});
-installBtn.addEventListener('click', async () => {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  const {outcome} = await deferredPrompt.userChoice;
-  if (outcome === 'accepted') toast('已加入主畫面！', 2000);
-  deferredPrompt = null;
-  installBar.classList.remove('show');
-});
-dismissBtn.addEventListener('click', () => installBar.classList.remove('show'));
-window.addEventListener('appinstalled', () => { installBar.classList.remove('show'); toast('安裝完成！', 2000); });
+  const pBox=document.createElement("div");
+  pBox.className="roster-pitcher-box";
+  pBox.innerHTML=`<span class="roster-pitcher-label">投手</span><span class="roster-pitcher-name">${pitcherName||"-"}</span>`;
+  panel.appendChild(pBox);
 
-/* ── INIT ── */
-render();
+  /* ✅ 你截圖紅框那條：長按這裡改投手名字（外面同步） */
+  addLongPress(pBox, ()=>editPitcher(teamNo));
+
+  const headRow=document.createElement("div");
+  headRow.className="roster-head-row";
+  headRow.innerHTML=`<div class="roster-col-order">棒次</div><div class="roster-col-name">打者</div><div class="roster-col-pos">守備</div>`;
+  panel.appendChild(headRow);
+
+  const list=document.createElement("div");
+  list.className="roster-list";
+  (rosterArr||[]).forEach(r=>{
+    const row=document.createElement("div");
+    row.className="roster-row";
+    row.innerHTML=`<div class="roster-col-order">${r.order||""}</div><div class="roster-col-name">${r.name||""}</div><div class="roster-col-pos">${r.pos||""}</div>`;
+    list.appendChild(row);
+  });
+  panel.appendChild(list);
+}
+
+function renderRosters(){
+  const p1=document.getElementById("team1RosterPanel");
+  const p2=document.getElementById("team2RosterPanel");
+  if(p1){
+    if(showRoster1){
+      p1.classList.add("show");
+      fillRosterPanel(p1, 1, state.team1Name, state.team1Pitcher, state.team1Roster);
+    }else p1.classList.remove("show");
+  }
+  if(p2){
+    if(showRoster2){
+      p2.classList.add("show");
+      fillRosterPanel(p2, 2, state.team2Name, state.team2Pitcher, state.team2Roster);
+    }else p2.classList.remove("show");
+  }
+}
+
+function formatBatterText(player){
+  if(!player) return "-";
+  const parts=[];
+  if(player.order) parts.push(player.order);
+  if(player.name) parts.push(player.name);
+  if(player.pos) parts.push(player.pos);
+  return parts.join(" ")||"-";
+}
+function clampBPIndex(teamNo){
+  const roster=teamNo===1?(state.team1Roster||[]):(state.team2Roster||[]);
+  const key=teamNo===1?"bp1Index":"bp2Index";
+  if(!Array.isArray(roster)||roster.length===0){ state[key]=0; return; }
+  let idx=state[key];
+  if(typeof idx!=="number"||idx<0) idx=0;
+  if(idx>=roster.length) idx=roster.length-1;
+  state[key]=idx;
+}
+function applyBattingHighlight(){
+  const team1Block=document.getElementById("team1Block");
+  const team2Block=document.getElementById("team2Block");
+  const team1ScoreArea=document.getElementById("team1ScoreArea");
+  const team2ScoreArea=document.getElementById("team2ScoreArea");
+  if(!team1Block||!team2Block||!team1ScoreArea||!team2ScoreArea) return;
+
+  [team1Block,team2Block].forEach(el=>el.classList.remove("team-batting","team-pitching"));
+  [team1ScoreArea,team2ScoreArea].forEach(el=>el.classList.remove("score-batting","score-pitching"));
+
+  if(state.bp1Mode==="B"&&state.bp2Mode==="P"){
+    team1Block.classList.add("team-batting");
+    team1ScoreArea.classList.add("score-batting");
+    team2Block.classList.add("team-pitching");
+    team2ScoreArea.classList.add("score-pitching");
+  }else if(state.bp2Mode==="B"&&state.bp1Mode==="P"){
+    team2Block.classList.add("team-batting");
+    team2ScoreArea.classList.add("score-batting");
+    team1Block.classList.add("team-pitching");
+    team1ScoreArea.classList.add("score-pitching");
+  }else{
+    team1Block.classList.add("team-pitching");
+    team2Block.classList.add("team-pitching");
+    team1ScoreArea.classList.add("score-pitching");
+    team2ScoreArea.classList.add("score-pitching");
+  }
+}
+function renderBPBoxes(){
+  clampBPIndex(1); clampBPIndex(2);
+  const roster1=state.team1Roster||[];
+  const roster2=state.team2Roster||[];
+
+  const bp1Box=document.getElementById("bp1Box");
+  const bp1Label=document.getElementById("bp1Label");
+  const bp1Name=document.getElementById("bp1Name");
+
+  const bp2Box=document.getElementById("bp2Box");
+  const bp2Label=document.getElementById("bp2Label");
+  const bp2Name=document.getElementById("bp2Name");
+
+  if(bp1Box&&bp1Label&&bp1Name){
+    if(state.bp1Mode==="P"){
+      bp1Label.textContent="投手";
+      bp1Name.textContent=state.team1Pitcher||"-";
+      bp1Box.classList.remove("mode-batter"); bp1Box.classList.add("mode-pitcher");
+    }else{
+      bp1Label.textContent="打者";
+      const player=roster1.length?roster1[state.bp1Index||0]:null;
+      bp1Name.textContent=formatBatterText(player);
+      bp1Box.classList.remove("mode-pitcher"); bp1Box.classList.add("mode-batter");
+    }
+  }
+  if(bp2Box&&bp2Label&&bp2Name){
+    if(state.bp2Mode==="P"){
+      bp2Label.textContent="投手";
+      bp2Name.textContent=state.team2Pitcher||"-";
+      bp2Box.classList.remove("mode-batter"); bp2Box.classList.add("mode-pitcher");
+    }else{
+      bp2Label.textContent="打者";
+      const player=roster2.length?roster2[state.bp2Index||0]:null;
+      bp2Name.textContent=formatBatterText(player);
+      bp2Box.classList.remove("mode-pitcher"); bp2Box.classList.add("mode-batter");
+    }
+  }
+  applyBattingHighlight();
+}
+function moveBatter(teamNo,delta){
+  const roster=teamNo===1?(state.team1Roster||[]):(state.team2Roster||[]);
+  if(!roster.length) return;
+  const key=teamNo===1?"bp1Index":"bp2Index";
+  let idx=state[key]||0;
+  const len=roster.length;
+  idx=(idx+delta)%len;
+  if(idx<0) idx+=len;
+  state[key]=idx;
+  saveState();
+  renderBPBoxes();
+}
+function toggleBPMode(teamNo){
+  const thisKey=teamNo===1?"bp1Mode":"bp2Mode";
+  const otherKey=teamNo===1?"bp2Mode":"bp1Mode";
+  const newMode=state[thisKey]==="P"?"B":"P";
+  state[thisKey]=newMode;
+  if(newMode==="B") state[otherKey]="P";
+  else if(state[otherKey]==="P") state[otherKey]="B";
+  saveState();
+  renderBPBoxes();
+}
+
+function editRoster(teamNo){
+  const rosterKey=teamNo===1?"team1Roster":"team2Roster";
+  const pitcherKey=teamNo===1?"team1Pitcher":"team2Pitcher";
+  const teamName=teamNo===1?state.team1Name:state.team2Name;
+  const current=state[rosterKey]||[];
+  const currentLines=current.map(r=>`${r.order||""},${r.name||""},${r.pos||""}`).join("\n");
+
+  openTextOverlay(`${teamName} 選手名單（每行：棒次,姓名,守備）`, currentLines, (val)=>{
+    const newRoster=[];
+    String(val||"").split("\n").forEach(line=>{
+      const t=line.trim(); if(!t) return;
+      const parts=t.split(",");
+      newRoster.push({ order:(parts[0]||"").trim(), name:(parts[1]||"").trim(), pos:(parts[2]||"").trim() });
+    });
+    if(newRoster.length) state[rosterKey]=newRoster;
+
+    openTextOverlay(`${teamName} 目前投手名字`, state[pitcherKey]||"", (pval)=>{
+      if(pval!=null) state[pitcherKey]=(String(pval||"").trim() || state[pitcherKey] || "");
+      if(teamNo===1) state.bp1Index=0; else state.bp2Index=0;
+      saveState();
+      renderRosters();
+      renderBPBoxes();
+      fitTeamNames();
+    });
+  });
+}
+function toggleRoster(teamNo){
+  if(teamNo===1) showRoster1=!showRoster1;
+  else showRoster2=!showRoster2;
+  renderRosters();
+}
+
+/* ===== Render ===== */
+function renderAll(){
+  document.getElementById("gameTitleText").textContent=state.gameTitle;
+  document.getElementById("team1Name").textContent=state.team1Name;
+  document.getElementById("team2Name").textContent=state.team2Name;
+  document.getElementById("score1").textContent=state.score1;
+  document.getElementById("score2").textContent=state.score2;
+
+  fitTeamNames();
+
+  document.getElementById("inningNumber").textContent=state.inning;
+  const h=document.getElementById("halfIndicator");
+  h.textContent=state.half==="top"?"▲":"▼";
+  h.classList.toggle("top",state.half==="top");
+  h.classList.toggle("bot",state.half==="bot");
+
+  document.getElementById("base1").classList.toggle("on",!!(state.bases&1));
+  document.getElementById("base2").classList.toggle("on",!!(state.bases&2));
+  document.getElementById("base3").classList.toggle("on",!!(state.bases&4));
+
+  renderLights(document.getElementById("ballsLights"),state.balls,3,"b");
+  renderLights(document.getElementById("strikesLights"),state.strikes,2,"s");
+  renderLights(document.getElementById("outsLights"),state.outs,2,"o");
+
+  /* ✅ 兩出局：O 燈轉播閃爍（class 掛在 outsArea） */
+  const outsAreaEl = document.getElementById("outsArea");
+  if(outsAreaEl) outsAreaEl.classList.toggle("out-two", state.outs===2);
+
+  /* ✅ B/S/O 變動字幕 */
+  if(state.balls !== __lastBalls){
+    if(state.balls >= 1){
+      const mapB = {1:"一壞球", 2:"兩壞球", 3:"三壞球"};
+      const line1 = mapB[state.balls] || `${state.balls} 壞球`;
+      showFlash(`${line1}\nBALL`, "flash-ball", 950);
+    }
+    __lastBalls = state.balls;
+  }
+  if(state.strikes !== __lastStrikes){
+    if(state.strikes >= 1){
+      if(state.strikes === 1){
+        showFlash("一好球", "flash-strike", 900);
+      }else if(state.strikes === 2){
+        showFlash("兩好球\nSTRIKE!", "flash-strike", 1200);
+      }else{
+        showFlash(`${state.strikes} 好球`, "flash-strike", 900);
+      }
+    }
+    __lastStrikes = state.strikes;
+  }
+  if(state.outs !== __lastOuts){
+    if(state.outs === 1){
+      showFlash("一出局", "flash-out", 1100);
+    }else if(state.outs === 2){
+      showFlash("兩出局\nOUT", "flash-out", 1800);
+    }
+    __lastOuts = state.outs;
+  }
+
+  renderGameTimer();
+  renderRosters();
+  renderBPBoxes();
+}
+
+function resetAll(){
+  state.score1=0; state.score2=0;
+  state.inning=1; state.half="top";
+  state.balls=0; state.strikes=0; state.outs=0;
+  state.bases=0;
+  saveState();
+  stopGameTimer();
+  resetGameTimer();
+  renderAll();
+}
+
+/* Weather/GPS */
+function weatherCodeToText(code){
+  code=Number(code);
+  if(code===0) return "晴朗";
+  if([1,2,3].includes(code)) return "多雲";
+  if([45,48].includes(code)) return "霧";
+  if([51,53,55,56,57].includes(code)) return "毛毛雨";
+  if([61,63,65,66,67].includes(code)) return "陣雨";
+  if([71,73,75,77].includes(code)) return "降雪";
+  if([80,81,82].includes(code)) return "大雨";
+  if([85,86].includes(code)) return "大雪";
+  if([95,96,99].includes(code)) return "雷雨";
+  return "天氣";
+}
+function initLocationAndWeather(){
+  const locEl=document.getElementById("locationWeatherLine");
+  let placeText="", weatherText="";
+  function renderCombo(){
+    const parts=[];
+    if(placeText) parts.push(placeText);
+    if(weatherText) parts.push(weatherText);
+    locEl.textContent=parts.join(" · ") || "GPS 讀取中...";
+  }
+
+  if(!navigator.geolocation){
+    placeText="裝置不支援 GPS";
+    weatherText="無法取得";
+    mapLocationQuery=state.gameTitle||"";
+    renderCombo();
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    (pos)=>{
+      const {latitude,longitude}=pos.coords;
+
+      fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`)
+        .then(r=>r.json())
+        .then(data=>{
+          const addr=data.address||{};
+          const city=addr.city||addr.town||addr.village||addr.suburb||"";
+          const country=addr.country||"";
+          const txt=[city,country].filter(Boolean).join(" · ");
+          if(txt){
+            placeText=txt;
+            mapLocationQuery=txt;
+            renderCombo();
+          }
+        })
+        .catch(()=>{});
+
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=relativehumidity_2m&forecast_days=1&timezone=auto`)
+        .then(r=>r.json())
+        .then(data=>{
+          const cw=data.current_weather;
+          if(!cw){ weatherText="無資料"; renderCombo(); return; }
+          const temp=cw.temperature;
+          const code=cw.weathercode;
+          let humidity=null;
+          if(data.hourly && Array.isArray(data.hourly.relativehumidity_2m)) humidity=data.hourly.relativehumidity_2m[0];
+          const text=weatherCodeToText(code);
+          weatherText=(humidity!=null)?`${text} ${temp}°C ${humidity}%`:`${text} ${temp}°C`;
+          renderCombo();
+        })
+        .catch(()=>{ weatherText="讀取失敗"; renderCombo(); });
+    },
+    ()=>{
+      placeText="GPS 拒絕或失敗";
+      weatherText="無法取得";
+      mapLocationQuery=state.gameTitle||"";
+      renderCombo();
+    },
+    { enableHighAccuracy:false, timeout:8000, maximumAge:600000 }
+  );
+}
+
+/* Bind */
+function bindEvents(){
+  const resetBadge=document.getElementById("resetBadge");
+  if(resetBadge) addLongPress(resetBadge, resetAll);
+
+  const gameTitleBox=document.getElementById("gameTitleBox");
+  addLongPress(gameTitleBox, ()=>{
+    openTextOverlay("請輸入比賽名稱", state.gameTitle, (val)=>{
+      const v=String(val||"").trim();
+      if(!v) return;
+      state.gameTitle=v;
+      saveState(); renderAll();
+    });
+  });
+  addTapHandler(gameTitleBox,
+    ()=>{ toggleFlashSticky("game-start","比賽開始","flash-greenwhite"); },
+    ()=>{ toggleFlashSticky("game-end","比賽結束","flash-rgwhite"); }
+  );
+
+  const t1NameEl=document.getElementById("team1Name");
+  const t2NameEl=document.getElementById("team2Name");
+  addLongPress(t1NameEl, ()=> openTextOverlay("請輸入隊名", state.team1Name, (v)=>{ v=String(v||"").trim(); if(!v) return; state.team1Name=v; saveState(); renderAll(); }) );
+  addLongPress(t2NameEl, ()=> openTextOverlay("請輸入隊名", state.team2Name, (v)=>{ v=String(v||"").trim(); if(!v) return; state.team2Name=v; saveState(); renderAll(); }) );
+
+  addTapHandler(t1NameEl, null, ()=>toggleRoster(1));
+  addTapHandler(t2NameEl, null, ()=>toggleRoster(2));
+
+  addTapHandler(document.getElementById("team1ScoreArea"),
+    ()=>{ state.score1++; saveState(); renderAll(); },
+    ()=>{ state.score1=Math.max(0,state.score1-1); saveState(); renderAll(); }
+  );
+  addTapHandler(document.getElementById("team2ScoreArea"),
+    ()=>{ state.score2++; saveState(); renderAll(); },
+    ()=>{ state.score2=Math.max(0,state.score2-1); saveState(); renderAll(); }
+  );
+
+  addTapHandler(document.getElementById("inningBox"),
+    ()=>{ state.inning++; saveState(); renderAll(); },
+    ()=>{ state.inning=Math.max(1,state.inning-1); saveState(); renderAll(); }
+  );
+  document.getElementById("halfIndicator").addEventListener("click",(e)=>{
+    e.stopPropagation();
+    state.half = state.half==="top" ? "bot" : "top";
+    saveState(); renderAll();
+  });
+
+  document.getElementById("base1").addEventListener("click",()=>{ state.bases^=1; saveState(); renderAll(); });
+  document.getElementById("base2").addEventListener("click",()=>{ state.bases^=2; saveState(); renderAll(); });
+  document.getElementById("base3").addEventListener("click",()=>{ state.bases^=4; saveState(); renderAll(); });
+
+  document.getElementById("ballsArea").addEventListener("click",()=>{ state.balls=(state.balls<3)?state.balls+1:0; saveState(); renderAll(); });
+  document.getElementById("strikesArea").addEventListener("click",()=>{ state.strikes=(state.strikes<2)?state.strikes+1:0; saveState(); renderAll(); });
+  document.getElementById("outsArea").addEventListener("click",()=>{
+    state.outs=(state.outs<2)?state.outs+1:0;
+    state.balls=0;
+    state.strikes=0;
+    saveState();
+    renderAll();
+  });
+
+  const gameTimerEl=document.getElementById("gameTimer");
+  addTapHandler(gameTimerEl,
+    ()=>{ gameRunning?stopGameTimer():startGameTimer(); },
+    ()=>{ resetGameTimer(); stopGameTimer(); }
+  );
+
+  const roster1=document.getElementById("team1RosterPanel");
+  const roster2=document.getElementById("team2RosterPanel");
+  if(roster1){ addLongPress(roster1,()=>editRoster(1)); addTapHandler(roster1,null,()=>toggleRoster(1)); }
+  if(roster2){ addLongPress(roster2,()=>editRoster(2)); addTapHandler(roster2,null,()=>toggleRoster(2)); }
+
+  const bp1Box=document.getElementById("bp1Box");
+  const bp2Box=document.getElementById("bp2Box");
+  addTapHandler(bp1Box,null,()=>toggleBPMode(1));
+  addTapHandler(bp2Box,null,()=>toggleBPMode(2));
+  addSwipeHandler(bp1Box,()=>{ if(state.bp1Mode==="B") moveBatter(1,+1); },()=>{ if(state.bp1Mode==="B") moveBatter(1,-1); });
+  addSwipeHandler(bp2Box,()=>{ if(state.bp2Mode==="B") moveBatter(2,+1); },()=>{ if(state.bp2Mode==="B") moveBatter(2,-1); });
+
+  /* ✅ 追加：BP 投手模式時，長按可改投手名字（外面也同步） */
+  addLongPress(bp1Box, ()=>{ if(state.bp1Mode==="P") editPitcher(1); });
+  addLongPress(bp2Box, ()=>{ if(state.bp2Mode==="P") editPitcher(2); });
+
+  const bp1ArrowUp=document.getElementById("bp1ArrowUp");
+  const bp1ArrowDown=document.getElementById("bp1ArrowDown");
+  const bp2ArrowUp=document.getElementById("bp2ArrowUp");
+  const bp2ArrowDown=document.getElementById("bp2ArrowDown");
+  if(bp1ArrowUp) bp1ArrowUp.addEventListener("click",(e)=>{ e.stopPropagation(); if(state.bp1Mode==="B") moveBatter(1,-1); });
+  if(bp1ArrowDown) bp1ArrowDown.addEventListener("click",(e)=>{ e.stopPropagation(); if(state.bp1Mode==="B") moveBatter(1,+1); });
+  if(bp2ArrowUp) bp2ArrowUp.addEventListener("click",(e)=>{ e.stopPropagation(); if(state.bp2Mode==="B") moveBatter(2,-1); });
+  if(bp2ArrowDown) bp2ArrowDown.addEventListener("click",(e)=>{ e.stopPropagation(); if(state.bp2Mode==="B") moveBatter(2,+1); });
+
+  const locBox=document.getElementById("topLocationWeather");
+  addTapHandler(locBox,null,()=>showMapOverlay()); // 雙擊開地圖
+  const mapCloseEl=document.getElementById("mapClose");
+  const mapOverlayEl=document.getElementById("mapOverlay");
+  if(mapCloseEl) mapCloseEl.addEventListener("click",hideMapOverlay);
+  if(mapOverlayEl) mapOverlayEl.addEventListener("click",(e)=>{ if(e.target===mapOverlayEl) hideMapOverlay(); });
+
+  const linkToggleEl=document.getElementById("linkToggle");
+  const linkOverlayEl=document.getElementById("linkOverlay");
+  const linkCloseEl=document.getElementById("linkClose");
+  function toggleLinkOverlay(){ if(linkOverlayEl) linkOverlayEl.classList.toggle("show"); }
+  if(linkToggleEl && linkOverlayEl){
+    linkToggleEl.addEventListener("click",(e)=>{ e.stopPropagation(); toggleLinkOverlay(); });
+    if(linkCloseEl) linkCloseEl.addEventListener("click",(e)=>{ e.stopPropagation(); linkOverlayEl.classList.remove("show"); });
+    linkOverlayEl.addEventListener("click",(e)=>{ if(e.target===linkOverlayEl) linkOverlayEl.classList.remove("show"); });
+  }
+
+  window.addEventListener("resize", ()=>{
+    fitTeamNames();
+  });
+}
+
+function init(){
+  loadState();
+
+  /* ✅ 初始化 last 值：避免剛進頁面就因為 localStorage 的狀態直接跳字幕 */
+  __lastBalls = state.balls;
+  __lastStrikes = state.strikes;
+  __lastOuts = state.outs;
+
+  renderAll();
+  bindEvents();
+
+  updateClock();
+  setInterval(updateClock,1000);
+
+  initLocationAndWeather();
+  bindBgOpacityGesture();
+
+  if(!getComputedStyle(document.getElementById("mainBar")).getPropertyValue("--barBgOpacity").trim()){
+    setBarBgOpacity(1);
+  }
+
+  fitTeamNames();
+  requestAnimationFrame(()=>fitTeamNames());
+
+  bindDoubleTapFullscreen();
+}
+init();
 </script>
 </body>
 </html>
