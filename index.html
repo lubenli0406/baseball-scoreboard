@@ -7,6 +7,9 @@
 
 
 
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
 <script>
 const APP_META = {
   app: "Ggs 怪機絲 EGL全球通棒球記分板 PRO6",
@@ -130,6 +133,23 @@ const APP_META = {
     top:1.5vh; left:1.5vw;
     z-index:12;
     text-align:left;
+  }
+
+  .roster-toggle{
+    position:fixed;
+    top:1.4vh;
+    right:1.2vw;
+    padding:0.9vh 1.8vw;
+    border-radius:999px;
+    border:0.3vh solid rgba(196,206,212,0.85);
+    background:rgba(0,0,0,0.7);
+    color:#fff;
+    font-size:2.2vh;
+    font-weight:800;
+    letter-spacing:0.08em;
+    cursor:pointer;
+    opacity:0.85;
+    z-index:999999;
   }
 
   .main-panel{
@@ -823,6 +843,43 @@ const APP_META = {
     background:linear-gradient(90deg,#020617,#000);
     border-top:0.2vh solid rgba(196,206,212,0.25);
   }
+  .roster-editor-inner{
+    width:min(86vw, 760px);
+    max-height:82vh;
+    border-radius:2vh;
+    background:#000;
+    border:0.4vh solid rgba(196,206,212,0.9);
+    box-shadow:0 0 3vh rgba(0,0,0,0.95);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+  }
+  .roster-editor-body{
+    flex:1;
+    overflow:auto;
+    padding:1.5vh 1.5vw;
+  }
+  .roster-editor-row{
+    display:grid;
+    grid-template-columns:minmax(5em,0.6fr) minmax(0,1.7fr) minmax(5em,1fr);
+    align-items:center;
+    gap:1vw;
+    padding:0.7vh 0;
+    border-bottom:0.15vh solid rgba(196,206,212,0.2);
+    font-size:2.4vh;
+  }
+  .roster-editor-row.pitcher{ grid-template-columns:minmax(5em,0.6fr) minmax(0,2.7fr); }
+  .roster-editor-row label{ color:var(--mlb-silver); font-weight:800; }
+  .roster-editor-row select{
+    width:100%;
+    min-width:0;
+    padding:0.7vh 0.8vw;
+    border-radius:0.8vh;
+    border:0.2vh solid rgba(196,206,212,0.65);
+    background:#071529;
+    color:#fff;
+    font-size:2.3vh;
+  }
   .btn{
     padding:0.9vh 2.2vh;
     border-radius:999px;
@@ -934,7 +991,22 @@ const APP_META = {
   </div>
 </div>
 
+<div id="rosterEditorOverlay" class="overlay">
+  <div class="roster-editor-inner">
+    <div class="overlay-header">
+      <span id="rosterEditorTitle" class="overlay-title">出賽球員選擇</span>
+      <button id="rosterEditorClose" class="overlay-close" aria-label="關閉">✕</button>
+    </div>
+    <div id="rosterEditorBody" class="roster-editor-body"></div>
+    <div class="text-actions">
+      <button id="rosterEditorCancel" class="btn">取消</button>
+      <button id="rosterEditorSave" class="btn primary">儲存</button>
+    </div>
+  </div>
+</div>
+
 <div id="resetBadge" class="reset-badge" title="長按全部歸 0">0</div>
+<div id="rosterToggle" class="roster-toggle" title="開/關出賽名單">出賽名單</div>
 <div id="linkToggle" class="link-toggle" title="開/關 PRO2 比分頁">o</div>
 
 <div class="stage">
@@ -1075,6 +1147,26 @@ let state = {
     { order: "7", name: "許O盛", pos: "左外野" },
     { order: "8", name: "吳O毅", pos: "捕手" },
     { order: "9", name: "邱O元", pos: "游擊" }
+  ],
+  gameRoster: [
+    { number: "1", name: "江尚宥" },
+    { number: "3", name: "陸翊揚" },
+    { number: "4", name: "陳品成" },
+    { number: "4", name: "羅寓麟" },
+    { number: "6", name: "侯雲輝" },
+    { number: "7", name: "王韋銘" },
+    { number: "8", name: "張澤豪" },
+    { number: "9", name: "顏明淵" },
+    { number: "10", name: "葉旻碩" },
+    { number: "14", name: "黃晨硯" },
+    { number: "15", name: "陳振宇" },
+    { number: "18", name: "葉劉柏珩" },
+    { number: "19", name: "梁烜語" },
+    { number: "21", name: "許祐華" },
+    { number: "23", name: "陳梓豪" },
+    { number: "24", name: "黃楷中" },
+    { number: "25", name: "李祐宇" },
+    { number: "26", name: "李祐澄" }
   ],
   bp1Mode: "P",
   bp2Mode: "P",
@@ -1320,7 +1412,45 @@ function loadState(){
   if(typeof state.bp1Index!=="number") state.bp1Index=0;
   if(typeof state.bp2Index!=="number") state.bp2Index=0;
 }
-function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){} }
+let applyingSharedState=false;
+let firebaseStateRef=null;
+let firebaseReady=false;
+function isSharedMode(){
+  return location.protocol !== "file:" && typeof firebase !== "undefined";
+}
+function syncStateToServer(){
+  if(!firebaseReady || applyingSharedState) return;
+  firebaseStateRef.set(state).catch(()=>{});
+}
+function startSharedSync(){
+  if(!isSharedMode()) return;
+  const firebaseConfig={
+    apiKey:"AIzaSyDSmrVOB-fkVZ2gGpW1i-T0kTutbt1nkNc",
+    authDomain:"baseball-scoreboard-2e8e1.firebaseapp.com",
+    databaseURL:"https://baseball-scoreboard-2e8e1-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId:"baseball-scoreboard-2e8e1",
+    storageBucket:"baseball-scoreboard-2e8e1.firebasestorage.app",
+    messagingSenderId:"705407067271",
+    appId:"1:705407067271:web:038af55cf9a2d5ee7fc422"
+  };
+  try{
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    firebaseStateRef=firebase.database().ref("scoreboard/state");
+    firebaseReady=true;
+    firebaseStateRef.on("value",snapshot=>{
+      const remote=snapshot.val();
+      if(!remote){ syncStateToServer(); return; }
+      applyingSharedState=true;
+      state=Object.assign(state,remote);
+      applyingSharedState=false;
+      renderAll();
+    });
+  }catch(e){ firebaseReady=false; }
+}
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
+  syncStateToServer();
+}
 
 /* ===== Clock ===== */
 function updateClock(){
@@ -1618,12 +1748,158 @@ function editRoster(teamNo){
     });
   });
 }
+function editGameRoster(){
+  const current=state.gameRoster||[];
+  const currentLines=current.map(r=>`${r.number||""},${r.name||""}`).join("\n");
+
+  openTextOverlay("出賽名單（每行：背號,姓名）", currentLines, (val)=>{
+    const newRoster=[];
+    String(val||"").split("\n").forEach(line=>{
+      const t=line.trim(); if(!t) return;
+      const parts=t.split(",");
+      newRoster.push({ number:(parts[0]||"").trim(), name:(parts[1]||"").trim() });
+    });
+    state.gameRoster=newRoster;
+    saveState();
+  });
+}
+let rosterEditorTeamNo=1;
+let rosterEditorFields=[];
+let rosterEditorPositionFields=[];
+function closeRosterEditor(){
+  const overlay=document.getElementById("rosterEditorOverlay");
+  if(overlay) overlay.classList.remove("show");
+  rosterEditorFields=[];
+  rosterEditorPositionFields=[];
+}
+function openTeamRosterEditor(teamNo){
+  const overlay=document.getElementById("rosterEditorOverlay");
+  const title=document.getElementById("rosterEditorTitle");
+  const body=document.getElementById("rosterEditorBody");
+  if(!overlay||!title||!body) return;
+
+  rosterEditorTeamNo=teamNo;
+  rosterEditorFields=[];
+  const roster=teamNo===1?(state.team1Roster||[]):(state.team2Roster||[]);
+  const gameRoster=state.gameRoster||[];
+  const batterFields=[];
+  rosterEditorPositionFields=[];
+  const positionOptions=["投手","捕手","一壘","二壘","三壘","游擊","左外野","中外野","右外野","指定打擊"];
+  title.textContent=`${teamNo===1?state.team1Name:state.team2Name} 出賽球員選擇`;
+  body.innerHTML="";
+
+  function fillOptions(select,selectedIndex,excludeIndexes){
+    select.innerHTML="";
+    gameRoster.forEach((player,index)=>{
+      if(excludeIndexes.has(index) && index!==selectedIndex) return;
+      const option=document.createElement("option");
+      option.value=String(index);
+      option.textContent=`${player.number||player.order||""},${player.name||""}`;
+      if(index===selectedIndex) option.selected=true;
+      select.appendChild(option);
+    });
+  }
+  function refreshBatterOptions(){
+    const selectedIndexes=new Set(batterFields.map(select=>Number(select.value)));
+    batterFields.forEach(select=>fillOptions(select,Number(select.value),selectedIndexes));
+  }
+  function refreshPositionOptions(){
+    rosterEditorPositionFields.forEach(select=>{
+      const currentValue=select.value;
+      select.innerHTML="";
+      positionOptions.forEach(position=>{
+        const option=document.createElement("option");
+        option.value=position;
+        option.textContent=position;
+        option.selected=position===currentValue;
+        select.appendChild(option);
+      });
+      select.dataset.previousValue=currentValue;
+    });
+  }
+  function swapPositionSelection(select){
+    const previousValue=select.dataset.previousValue;
+    const selectedValue=select.value;
+    const otherSelect=rosterEditorPositionFields.find(other=>other!==select&&other.value===selectedValue);
+    if(otherSelect&&previousValue){
+      otherSelect.value=previousValue;
+      otherSelect.dataset.previousValue=previousValue;
+    }
+    select.dataset.previousValue=selectedValue;
+  }
+  function addField(labelText,currentName,isBatter,index,currentPosition){
+    const row=document.createElement("div");
+    row.className=`roster-editor-row${isBatter?"":" pitcher"}`;
+    const label=document.createElement("label");
+    label.textContent=labelText;
+    const select=document.createElement("select");
+    const usedPositions=new Set(rosterEditorPositionFields.map(positionSelect=>positionSelect.value));
+    const selectedPosition=isBatter&&currentPosition&&!usedPositions.has(currentPosition)
+      ?currentPosition
+      :(isBatter?positionOptions.find(position=>!usedPositions.has(position)):"");
+    const selectedIndex=gameRoster.findIndex(player=>player.name===currentName);
+    fillOptions(select,selectedIndex>=0?selectedIndex:(isBatter?index:0),new Set());
+    if(!gameRoster.length){
+      const option=document.createElement("option");
+      option.textContent="請先設定出賽名單";
+      option.value="";
+      select.appendChild(option);
+    }
+    row.appendChild(label);
+    row.appendChild(select);
+    if(isBatter){
+      const positionSelect=document.createElement("select");
+      positionOptions.forEach(position=>{
+        const option=document.createElement("option");
+        option.value=position;
+        option.textContent=position;
+        option.selected=position===selectedPosition;
+        positionSelect.appendChild(option);
+      });
+      row.appendChild(positionSelect);
+      rosterEditorPositionFields.push(positionSelect);
+      positionSelect.addEventListener("change",()=>{
+        swapPositionSelection(positionSelect);
+        refreshPositionOptions();
+      });
+    }
+    body.appendChild(row);
+    rosterEditorFields.push(select);
+    if(isBatter){
+      batterFields.push(select);
+      select.addEventListener("change",refreshBatterOptions);
+    }
+  }
+
+  roster.forEach((player,index)=>addField(`${player.order||index+1}棒`, player.name||"",true,index+1,player.pos||positionOptions[index+1]||""));
+  refreshBatterOptions();
+  refreshPositionOptions();
+  overlay.classList.add("show");
+}
+function saveTeamRosterEditor(){
+  const gameRoster=state.gameRoster||[];
+  if(!gameRoster.length){ closeRosterEditor(); return; }
+  const pitcherKey=rosterEditorTeamNo===1?"team1Pitcher":"team2Pitcher";
+
+  const rosterKey=rosterEditorTeamNo===1?"team1Roster":"team2Roster";
+  const roster=state[rosterKey]||[];
+  roster.forEach((player,index)=>{
+    const selected=gameRoster[Number(rosterEditorFields[index]?.value)];
+    if(selected) player.name=selected.name||"";
+    if(rosterEditorPositionFields[index]) player.pos=rosterEditorPositionFields[index].value;
+  });
+  const selectedPitcher=roster.find(player=>player.pos==="投手");
+  if(selectedPitcher) state[pitcherKey]=selectedPitcher.name||"";
+  state[rosterKey]=roster;
+  saveState();
+  closeRosterEditor();
+  renderAll();
+}
 function toggleRoster(teamNo){
   if(teamNo===1) showRoster1=!showRoster1;
   else showRoster2=!showRoster2;
   renderRosters();
 }
-
 /* ===== Render ===== */
 function renderAll(){
   document.getElementById("gameTitleText").textContent=state.gameTitle;
@@ -1779,6 +2055,20 @@ function bindEvents(){
   const resetBadge=document.getElementById("resetBadge");
   if(resetBadge) addLongPress(resetBadge, resetAll);
 
+  const rosterToggle=document.getElementById("rosterToggle");
+  if(rosterToggle) rosterToggle.addEventListener("click",editGameRoster);
+
+  const rosterEditorClose=document.getElementById("rosterEditorClose");
+  const rosterEditorCancel=document.getElementById("rosterEditorCancel");
+  const rosterEditorSave=document.getElementById("rosterEditorSave");
+  const rosterEditorOverlay=document.getElementById("rosterEditorOverlay");
+  if(rosterEditorClose) rosterEditorClose.addEventListener("click",closeRosterEditor);
+  if(rosterEditorCancel) rosterEditorCancel.addEventListener("click",closeRosterEditor);
+  if(rosterEditorSave) rosterEditorSave.addEventListener("click",saveTeamRosterEditor);
+  if(rosterEditorOverlay) rosterEditorOverlay.addEventListener("click",(e)=>{
+    if(e.target===rosterEditorOverlay) closeRosterEditor();
+  });
+
   const gameTitleBox=document.getElementById("gameTitleBox");
   addLongPress(gameTitleBox, ()=>{
     openTextOverlay("請輸入比賽名稱", state.gameTitle, (val)=>{
@@ -1798,7 +2088,7 @@ function bindEvents(){
   addLongPress(t1NameEl, ()=> openTextOverlay("請輸入隊名", state.team1Name, (v)=>{ v=String(v||"").trim(); if(!v) return; state.team1Name=v; saveState(); renderAll(); }) );
   addLongPress(t2NameEl, ()=> openTextOverlay("請輸入隊名", state.team2Name, (v)=>{ v=String(v||"").trim(); if(!v) return; state.team2Name=v; saveState(); renderAll(); }) );
 
-  addTapHandler(t1NameEl, null, ()=>toggleRoster(1));
+  addTapHandler(t1NameEl, null, ()=>openTeamRosterEditor(1));
   addTapHandler(t2NameEl, null, ()=>toggleRoster(2));
 
   addTapHandler(document.getElementById("team1ScoreArea"),
@@ -1903,6 +2193,7 @@ function init(){
 
   initLocationAndWeather();
   bindBgOpacityGesture();
+  startSharedSync();
 
   if(!getComputedStyle(document.getElementById("mainBar")).getPropertyValue("--barBgOpacity").trim()){
     setBarBgOpacity(1);
