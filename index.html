@@ -590,21 +590,6 @@ const APP_META = {
   .roster-col-order{ text-align:center; }
   .roster-col-pos{ text-align:center; }
 
-  /* Copyright */
-  .footer-copyright{
-    position:absolute;
-    left:0.6vw;
-    bottom:0.4vh;
-    font-size:1.8vh;
-    opacity:0.2;
-    letter-spacing:0.08em;
-    color:#c4ced4;
-    text-shadow:0 0 0.6vh rgba(0,0,0,1);
-    pointer-events:none;
-    white-space:nowrap;
-    z-index:200;
-  }
-
   /* Flash */
   .flash-overlay{
     position:fixed; inset:0;
@@ -732,25 +717,6 @@ const APP_META = {
     100%{ filter:brightness(1.0); }
   }
 
-  /* 左下 O + overlay */
-  .link-toggle{
-    position:fixed;
-    left:1.2vw;
-    bottom:1.4vh;
-    width:6vh; height:6vh;
-    border-radius:50%;
-    border:0.3vh solid #c4ced4;
-    background:rgba(0,0,0,0.7);
-    color:#c4ced4;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:3vh;
-    font-weight:900;
-    cursor:pointer;
-    opacity:0.2;
-    z-index:999999;
-  }
   .overlay{
     position:fixed; inset:0;
     background:rgba(0,0,0,0.7);
@@ -963,17 +929,6 @@ const APP_META = {
   </div>
 </div>
 
-<!-- ✅ Link Overlay：保留 X -->
-<div id="linkOverlay" class="overlay">
-  <div class="overlay-inner">
-    <div class="overlay-header">
-      <span class="overlay-title">Ggs棒球比分</span>
-      <button id="linkClose" class="overlay-close" aria-label="關閉">✕</button>
-    </div>
-    <iframe class="overlay-frame" src="https://www.cbav.com.tw/ggs/ggsbspro2.html" loading="lazy"></iframe>
-  </div>
-</div>
-
 <!-- ✅ Text Overlay：保留 X -->
 <div id="textOverlay" class="overlay">
   <div class="text-inner">
@@ -1007,7 +962,6 @@ const APP_META = {
 
 <div id="resetBadge" class="reset-badge" title="長按全部歸 0">0</div>
 <div id="rosterToggle" class="roster-toggle" title="開/關出賽名單">出賽名單</div>
-<div id="linkToggle" class="link-toggle" title="開/關 PRO2 比分頁">o</div>
 
 <div class="stage">
   <div class="bar" id="mainBar">
@@ -1215,7 +1169,7 @@ function fitTeamNames(){
 
 /* ===== 全螢幕（雙擊螢幕）===== */
 function isAnyOverlayOpen(){
-  const ids=["mapOverlay","linkOverlay","textOverlay"];
+  const ids=["mapOverlay","textOverlay"];
   return ids.some(id=>{
     const el=document.getElementById(id);
     return el && el.classList.contains("show");
@@ -1950,15 +1904,22 @@ function renderAll(){
   renderBPBoxes();
 }
 
-function resetAll(){
+function resetGameState(){
   state.score1=0; state.score2=0;
   state.inning=1; state.half="top";
   state.balls=0; state.strikes=0; state.outs=0;
   state.bases=0;
+  state.bp1Index=0;
+  state.bp2Index=0;
+  state.bp1Mode="P";
+  state.bp2Mode="B";
   saveState();
   stopGameTimer();
   resetGameTimer();
   renderAll();
+}
+function resetAll(){
+  resetGameState();
 }
 
 /* Weather/GPS */
@@ -2057,18 +2018,22 @@ function bindEvents(){
   });
 
   const gameTitleBox=document.getElementById("gameTitleBox");
-  addLongPress(gameTitleBox, ()=>{
-    openTextOverlay("請輸入比賽名稱", state.gameTitle, (val)=>{
-      const v=String(val||"").trim();
-      if(!v) return;
-      state.gameTitle=v;
-      saveState(); renderAll();
+  if(gameTitleBox){
+    gameTitleBox.addEventListener("click", (event)=>{
+      if(event.detail === 1){
+        resetGameState();
+        toggleFlashSticky("game-reset","比賽重置","flash-greenwhite");
+      }
     });
-  });
-  addTapHandler(gameTitleBox,
-    ()=>{ toggleFlashSticky("game-start","比賽開始","flash-greenwhite"); },
-    ()=>{ toggleFlashSticky("game-end","比賽結束","flash-rgwhite"); }
-  );
+    addLongPress(gameTitleBox, ()=>{
+      openTextOverlay("請輸入比賽名稱", state.gameTitle, (val)=>{
+        const v=String(val||"").trim();
+        if(!v) return;
+        state.gameTitle=v;
+        saveState(); renderAll();
+      });
+    });
+  }
 
   const t1NameEl=document.getElementById("team1Name");
   const t2NameEl=document.getElementById("team2Name");
@@ -2139,16 +2104,6 @@ function bindEvents(){
   const mapOverlayEl=document.getElementById("mapOverlay");
   if(mapCloseEl) mapCloseEl.addEventListener("click",hideMapOverlay);
   if(mapOverlayEl) mapOverlayEl.addEventListener("click",(e)=>{ if(e.target===mapOverlayEl) hideMapOverlay(); });
-
-  const linkToggleEl=document.getElementById("linkToggle");
-  const linkOverlayEl=document.getElementById("linkOverlay");
-  const linkCloseEl=document.getElementById("linkClose");
-  function toggleLinkOverlay(){ if(linkOverlayEl) linkOverlayEl.classList.toggle("show"); }
-  if(linkToggleEl && linkOverlayEl){
-    linkToggleEl.addEventListener("click",(e)=>{ e.stopPropagation(); toggleLinkOverlay(); });
-    if(linkCloseEl) linkCloseEl.addEventListener("click",(e)=>{ e.stopPropagation(); linkOverlayEl.classList.remove("show"); });
-    linkOverlayEl.addEventListener("click",(e)=>{ if(e.target===linkOverlayEl) linkOverlayEl.classList.remove("show"); });
-  }
 
   window.addEventListener("resize", ()=>{
     fitTeamNames();
