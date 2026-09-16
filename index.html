@@ -83,22 +83,13 @@ const APP_META = {
     padding:2vh 2vw;
     background:none;
     border-radius:2vh;
-    border:0.5vh solid var(--mlb-navy);
-    box-shadow:0 0 3vh rgba(0,0,0,0.9), 0 0 3vh rgba(196,206,212,0.8);
+    border:0.45vh solid rgba(4,30,66,0.95);
+    box-shadow:0 0 2.8vh rgba(0,0,0,0.9);
     display:flex;
     flex-direction:column;
     gap:1.5vh;
     overflow:hidden;
-    animation:barGlow 14s ease-in-out infinite;
     isolation:isolate;
-  }
-
-  @keyframes barGlow{
-    0%{ border-color:#ff3366; box-shadow:0 0 3vh rgba(0,0,0,0.9),0 0 3.5vh rgba(255,51,102,0.9); }
-    25%{ border-color:#3b82f6; box-shadow:0 0 3vh rgba(0,0,0,0.9),0 0 3.5vh rgba(59,130,246,0.9); }
-    50%{ border-color:#22c55e; box-shadow:0 0 3vh rgba(0,0,0,0.9),0 0 3.5vh rgba(34,197,94,0.9); }
-    75%{ border-color:#e5e7eb; box-shadow:0 0 3vh rgba(0,0,0,0.9),0 0 3.5vh rgba(229,231,235,0.95); }
-    100%{ border-color:#ff3366; box-shadow:0 0 3vh rgba(0,0,0,0.9),0 0 3.5vh rgba(255,51,102,0.9); }
   }
 
   /* ✅ 背景獨立層：雙指調透明，文字永遠 100% */
@@ -114,42 +105,21 @@ const APP_META = {
   }
   .bar > *{ position:relative; z-index:1; }
 
-  /* GPS/天氣/時間 */
-  .team-top-info{
-    padding:0.6vh 1vw;
-    border-radius:1.2vh;
-    background:linear-gradient(90deg, rgba(4,30,66,0.9), rgba(0,0,0,0.95));
-    border:0.25vh solid rgba(196,206,212,0.7);
-    box-shadow:0 0 1.4vh rgba(0,0,0,0.8);
-    font-size:2.2vh;
-    letter-spacing:0.05em;
-    display:inline-block;
-    max-width:60vw;
-    overflow:hidden;
-    line-height:1.4;
-  }
-  .weather-top-left{
-    position:absolute;
-    top:1.5vh; left:1.5vw;
-    z-index:12;
-    text-align:left;
-  }
-
   .roster-toggle{
-    position:fixed;
-    top:1.4vh;
-    right:1.2vw;
-    padding:0.9vh 1.8vw;
+    position:absolute;
+    top:1.1vh;
+    right:1.1vw;
+    padding:0.8vh 1.5vw;
     border-radius:999px;
-    border:0.3vh solid rgba(196,206,212,0.85);
-    background:rgba(0,0,0,0.7);
+    border:0.28vh solid rgba(196,206,212,0.8);
+    background:rgba(0,0,0,0.68);
     color:#fff;
-    font-size:2.2vh;
+    font-size:2.05vh;
     font-weight:800;
     letter-spacing:0.08em;
     cursor:pointer;
-    opacity:0.85;
-    z-index:999999;
+    opacity:0.92;
+    z-index:20;
   }
 
   .main-panel{
@@ -865,22 +835,7 @@ const APP_META = {
 
   .map-overlay{ z-index:9999991; background:rgba(0,0,0,0.8); }
 
-  /* ✅ iPad 4:3（較窄橫向）GPS/天氣區塊縮小，避免擋到比賽名稱 */
   @media (max-aspect-ratio: 3/2){
-    .weather-top-left{ top:0.8vh !important; left:0.8vw !important; }
-    .team-top-info{
-      max-width:36vw !important;
-      font-size:1.7vh !important;
-      padding:0.45vh 0.8vw !important;
-      border-radius:1.0vh !important;
-      line-height:1.25 !important;
-      opacity:0.92;
-    }
-    #locationWeatherLine, #dateTimeLine{
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
     .osb-block{ gap:1.0vw; }
     .osb-unit{ padding:0.8vh 1.6vh; }
     .osb-letter{ font-size:clamp(4.2vh, 4.8vh, 5.4vh); }
@@ -917,18 +872,6 @@ const APP_META = {
   <div id="flashText" class="flash-text"></div>
 </div>
 
-<!-- ✅ 地圖 Overlay：保留 X -->
-<div id="mapOverlay" class="overlay map-overlay">
-  <div class="overlay-inner">
-    <div class="overlay-header">
-      <span class="overlay-title">比賽地點地圖</span>
-      <button id="mapClose" class="overlay-close" aria-label="關閉">✕</button>
-    </div>
-    <iframe id="mapFrame" class="overlay-frame" src="" loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"></iframe>
-  </div>
-</div>
-
 <!-- ✅ Text Overlay：保留 X -->
 <div id="textOverlay" class="overlay">
   <div class="text-inner">
@@ -961,15 +904,10 @@ const APP_META = {
 </div>
 
 <div id="resetBadge" class="reset-badge" title="長按全部歸 0">0</div>
-<div id="rosterToggle" class="roster-toggle" title="開/關出賽名單">出賽名單</div>
 
 <div class="stage">
   <div class="bar" id="mainBar">
-
-    <div id="topLocationWeather" class="team-top-info weather-top-left">
-      <div id="locationWeatherLine">GPS 讀取中...</div>
-      <div id="dateTimeLine">--/--/-- (週-) --:--:--</div>
-    </div>
+    <div id="rosterToggle" class="roster-toggle" title="開/關出賽名單">出賽名單</div>
 
     <div id="team1RosterPanel" class="roster-panel roster-left"></div>
     <div id="team2RosterPanel" class="roster-panel roster-right"></div>
@@ -1062,7 +1000,6 @@ const APP_META = {
 
 <script>
 const STORAGE_KEY = "scoreboard_16x9_worldcup_zh_v1";
-const WEEKDAY_ZH = ["日","一","二","三","四","五","六"];
 
 let state = {
   gameTitle: "棒球賽",
@@ -1133,8 +1070,6 @@ let gameTimerId = null;
 let showRoster1 = false;
 let showRoster2 = false;
 
-let mapLocationQuery = "";
-
 /* ✅ 記憶：上一個 B/S/O（避免重複跳字幕） */
 let __lastBalls = 0;
 let __lastStrikes = 0;
@@ -1169,7 +1104,7 @@ function fitTeamNames(){
 
 /* ===== 全螢幕（雙擊螢幕）===== */
 function isAnyOverlayOpen(){
-  const ids=["mapOverlay","textOverlay"];
+  const ids=["textOverlay"];
   return ids.some(id=>{
     const el=document.getElementById(id);
     return el && el.classList.contains("show");
@@ -1336,23 +1271,6 @@ function toggleFlashSticky(tag,text,mode){
   if(flashTimer){ clearTimeout(flashTimer); flashTimer=null; }
 }
 
-/* ===== Map ===== */
-function showMapOverlay(){
-  const overlay=document.getElementById("mapOverlay");
-  const frame=document.getElementById("mapFrame");
-  if(!overlay||!frame) return;
-  const query=mapLocationQuery || state.gameTitle || "棒球場";
-  frame.src=`https://www.google.com/maps?q=${encodeURIComponent(query)}&hl=zh-TW&z=15&output=embed`;
-  overlay.classList.add("show");
-}
-function hideMapOverlay(){
-  const overlay=document.getElementById("mapOverlay");
-  const frame=document.getElementById("mapFrame");
-  if(!overlay||!frame) return;
-  overlay.classList.remove("show");
-  frame.src="";
-}
-
 /* ===== State ===== */
 function loadState(){
   try{
@@ -1414,20 +1332,6 @@ function startSharedSync(){
 function saveState(){
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }catch(e){}
   syncStateToServer();
-}
-
-/* ===== Clock ===== */
-function updateClock(){
-  const dtLine=document.getElementById("dateTimeLine");
-  const now=new Date();
-  const y=now.getFullYear();
-  const m=String(now.getMonth()+1).padStart(2,"0");
-  const d=String(now.getDate()).padStart(2,"0");
-  const hh=String(now.getHours()).padStart(2,"0");
-  const mm=String(now.getMinutes()).padStart(2,"0");
-  const ss=String(now.getSeconds()).padStart(2,"0");
-  const w=WEEKDAY_ZH[now.getDay()];
-  if(dtLine) dtLine.textContent=`${y}/${m}/${d} (週${w}) ${hh}:${mm}:${ss}`;
 }
 
 /* ===== Game timer ===== */
@@ -1922,82 +1826,6 @@ function resetAll(){
   resetGameState();
 }
 
-/* Weather/GPS */
-function weatherCodeToText(code){
-  code=Number(code);
-  if(code===0) return "晴朗";
-  if([1,2,3].includes(code)) return "多雲";
-  if([45,48].includes(code)) return "霧";
-  if([51,53,55,56,57].includes(code)) return "毛毛雨";
-  if([61,63,65,66,67].includes(code)) return "陣雨";
-  if([71,73,75,77].includes(code)) return "降雪";
-  if([80,81,82].includes(code)) return "大雨";
-  if([85,86].includes(code)) return "大雪";
-  if([95,96,99].includes(code)) return "雷雨";
-  return "天氣";
-}
-function initLocationAndWeather(){
-  const locEl=document.getElementById("locationWeatherLine");
-  let placeText="", weatherText="";
-  function renderCombo(){
-    const parts=[];
-    if(placeText) parts.push(placeText);
-    if(weatherText) parts.push(weatherText);
-    locEl.textContent=parts.join(" · ") || "GPS 讀取中...";
-  }
-
-  if(!navigator.geolocation){
-    placeText="裝置不支援 GPS";
-    weatherText="無法取得";
-    mapLocationQuery=state.gameTitle||"";
-    renderCombo();
-    return;
-  }
-
-  navigator.geolocation.getCurrentPosition(
-    (pos)=>{
-      const {latitude,longitude}=pos.coords;
-
-      fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`)
-        .then(r=>r.json())
-        .then(data=>{
-          const addr=data.address||{};
-          const city=addr.city||addr.town||addr.village||addr.suburb||"";
-          const country=addr.country||"";
-          const txt=[city,country].filter(Boolean).join(" · ");
-          if(txt){
-            placeText=txt;
-            mapLocationQuery=txt;
-            renderCombo();
-          }
-        })
-        .catch(()=>{});
-
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&hourly=relativehumidity_2m&forecast_days=1&timezone=auto`)
-        .then(r=>r.json())
-        .then(data=>{
-          const cw=data.current_weather;
-          if(!cw){ weatherText="無資料"; renderCombo(); return; }
-          const temp=cw.temperature;
-          const code=cw.weathercode;
-          let humidity=null;
-          if(data.hourly && Array.isArray(data.hourly.relativehumidity_2m)) humidity=data.hourly.relativehumidity_2m[0];
-          const text=weatherCodeToText(code);
-          weatherText=(humidity!=null)?`${text} ${temp}°C ${humidity}%`:`${text} ${temp}°C`;
-          renderCombo();
-        })
-        .catch(()=>{ weatherText="讀取失敗"; renderCombo(); });
-    },
-    ()=>{
-      placeText="GPS 拒絕或失敗";
-      weatherText="無法取得";
-      mapLocationQuery=state.gameTitle||"";
-      renderCombo();
-    },
-    { enableHighAccuracy:false, timeout:8000, maximumAge:600000 }
-  );
-}
-
 /* Bind */
 function bindEvents(){
   const resetBadge=document.getElementById("resetBadge");
@@ -2098,13 +1926,6 @@ function bindEvents(){
   if(bp2ArrowUp) bp2ArrowUp.addEventListener("click",(e)=>{ e.stopPropagation(); moveBatter(2,-1); });
   if(bp2ArrowDown) bp2ArrowDown.addEventListener("click",(e)=>{ e.stopPropagation(); moveBatter(2,+1); });
 
-  const locBox=document.getElementById("topLocationWeather");
-  addTapHandler(locBox,null,()=>showMapOverlay()); // 雙擊開地圖
-  const mapCloseEl=document.getElementById("mapClose");
-  const mapOverlayEl=document.getElementById("mapOverlay");
-  if(mapCloseEl) mapCloseEl.addEventListener("click",hideMapOverlay);
-  if(mapOverlayEl) mapOverlayEl.addEventListener("click",(e)=>{ if(e.target===mapOverlayEl) hideMapOverlay(); });
-
   window.addEventListener("resize", ()=>{
     fitTeamNames();
   });
@@ -2121,10 +1942,6 @@ function init(){
   renderAll();
   bindEvents();
 
-  updateClock();
-  setInterval(updateClock,1000);
-
-  initLocationAndWeather();
   bindBgOpacityGesture();
   startSharedSync();
 
