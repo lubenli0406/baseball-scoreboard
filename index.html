@@ -1084,7 +1084,7 @@ const APP_META = {
       </div>
 
       <div class="bp-row">
-        <div id="bp1Box" class="bp-box bp-left mode-pitcher" title="滑動換打者；雙擊切換 打者/投手；長按可改投手名">
+        <div id="bp1Box" class="bp-box bp-left mode-pitcher" title="投手">
           <div id="bp1ArrowUp" class="bp-arrow">▲</div>
           <div class="bp-main">
             <div id="bp1Label" class="bp-label">投手</div>
@@ -1093,18 +1093,16 @@ const APP_META = {
           <div id="bp1ArrowDown" class="bp-arrow">▼</div>
         </div>
 
-        <div id="bp2Box" class="bp-box bp-right mode-pitcher" title="滑動換打者；雙擊切換 打者/投手；長按可改投手名">
+        <div id="bp2Box" class="bp-box bp-right mode-batter" title="滑動或使用箭頭切換目前棒次打者">
           <div id="bp2ArrowUp" class="bp-arrow">▲</div>
           <div class="bp-main">
-            <div id="bp2Label" class="bp-label">投手</div>
+            <div id="bp2Label" class="bp-label">打者</div>
             <div id="bp2Name" class="bp-name">-</div>
           </div>
           <div id="bp2ArrowDown" class="bp-arrow">▼</div>
         </div>
       </div>
     </div>
-
-    <div class="footer-copyright">© 2025 Ggs 怪機絲 Baseball Scoreboard 02-2378-2712</div>
   </div>
 </div>
 
@@ -1407,10 +1405,21 @@ function loadState(){
     const saved=localStorage.getItem(STORAGE_KEY);
     if(saved) state=Object.assign(state, JSON.parse(saved));
   }catch(e){}
+  normalizeSharedRoster();
+}
+function normalizeSharedRoster(){
   if(!state.bp1Mode) state.bp1Mode="P";
   if(!state.bp2Mode) state.bp2Mode="P";
   if(typeof state.bp1Index!=="number") state.bp1Index=0;
   if(typeof state.bp2Index!=="number") state.bp2Index=0;
+  const sharedRoster=Array.isArray(state.team1Roster)&&state.team1Roster.length
+    ?state.team1Roster
+    :(state.team2Roster||[]);
+  state.team1Roster=sharedRoster;
+  state.team2Roster=sharedRoster;
+  state.team2Pitcher=state.team1Pitcher||state.team2Pitcher||"";
+  state.bp1Mode="P";
+  state.bp2Mode="B";
 }
 let applyingSharedState=false;
 let firebaseStateRef=null;
@@ -1442,6 +1451,7 @@ function startSharedSync(){
       if(!remote){ syncStateToServer(); return; }
       applyingSharedState=true;
       state=Object.assign(state,remote);
+      normalizeSharedRoster();
       applyingSharedState=false;
       renderAll();
     });
@@ -1661,65 +1671,38 @@ function applyBattingHighlight(){
   }
 }
 function renderBPBoxes(){
-  clampBPIndex(1); clampBPIndex(2);
-  const roster1=state.team1Roster||[];
-  const roster2=state.team2Roster||[];
-
-  const bp1Box=document.getElementById("bp1Box");
-  const bp1Label=document.getElementById("bp1Label");
-  const bp1Name=document.getElementById("bp1Name");
+  clampBPIndex(2);
+  const roster=state.team1Roster||[];
 
   const bp2Box=document.getElementById("bp2Box");
   const bp2Label=document.getElementById("bp2Label");
   const bp2Name=document.getElementById("bp2Name");
 
-  if(bp1Box&&bp1Label&&bp1Name){
-    if(state.bp1Mode==="P"){
-      bp1Label.textContent="投手";
-      bp1Name.textContent=state.team1Pitcher||"-";
-      bp1Box.classList.remove("mode-batter"); bp1Box.classList.add("mode-pitcher");
-    }else{
-      bp1Label.textContent="打者";
-      const player=roster1.length?roster1[state.bp1Index||0]:null;
-      bp1Name.textContent=formatBatterText(player);
-      bp1Box.classList.remove("mode-pitcher"); bp1Box.classList.add("mode-batter");
-    }
-  }
   if(bp2Box&&bp2Label&&bp2Name){
-    if(state.bp2Mode==="P"){
-      bp2Label.textContent="投手";
-      bp2Name.textContent=state.team2Pitcher||"-";
-      bp2Box.classList.remove("mode-batter"); bp2Box.classList.add("mode-pitcher");
-    }else{
-      bp2Label.textContent="打者";
-      const player=roster2.length?roster2[state.bp2Index||0]:null;
-      bp2Name.textContent=formatBatterText(player);
-      bp2Box.classList.remove("mode-pitcher"); bp2Box.classList.add("mode-batter");
-    }
+    bp2Label.textContent="打者";
+    const player=roster.length?roster[state.bp2Index||0]:null;
+    bp2Name.textContent=formatBatterText(player);
+    bp2Box.classList.remove("mode-pitcher"); bp2Box.classList.add("mode-batter");
   }
-  applyBattingHighlight();
+  const bp1Label=document.getElementById("bp1Label");
+  const bp1Name=document.getElementById("bp1Name");
+  if(bp1Label) bp1Label.textContent="投手";
+  if(bp1Name) bp1Name.textContent=state.team1Pitcher||"-";
 }
 function moveBatter(teamNo,delta){
-  const roster=teamNo===1?(state.team1Roster||[]):(state.team2Roster||[]);
+  const roster=state.team1Roster||[];
   if(!roster.length) return;
-  const key=teamNo===1?"bp1Index":"bp2Index";
-  let idx=state[key]||0;
+  let idx=state.bp2Index||0;
   const len=roster.length;
   idx=(idx+delta)%len;
   if(idx<0) idx+=len;
-  state[key]=idx;
+  state.bp2Index=idx;
   saveState();
   renderBPBoxes();
 }
 function toggleBPMode(teamNo){
-  const thisKey=teamNo===1?"bp1Mode":"bp2Mode";
-  const otherKey=teamNo===1?"bp2Mode":"bp1Mode";
-  const newMode=state[thisKey]==="P"?"B":"P";
-  state[thisKey]=newMode;
-  if(newMode==="B") state[otherKey]="P";
-  else if(state[otherKey]==="P") state[otherKey]="B";
-  saveState();
-  renderBPBoxes();
+  state.bp1Mode="P";
+  state.bp2Mode="B";
 }
 
 function editRoster(teamNo){
@@ -1772,20 +1755,20 @@ function closeRosterEditor(){
   rosterEditorFields=[];
   rosterEditorPositionFields=[];
 }
-function openTeamRosterEditor(teamNo){
+function openTeamRosterEditor(){
   const overlay=document.getElementById("rosterEditorOverlay");
   const title=document.getElementById("rosterEditorTitle");
   const body=document.getElementById("rosterEditorBody");
   if(!overlay||!title||!body) return;
 
-  rosterEditorTeamNo=teamNo;
+  rosterEditorTeamNo=1;
   rosterEditorFields=[];
-  const roster=teamNo===1?(state.team1Roster||[]):(state.team2Roster||[]);
+  const roster=state.team1Roster||[];
   const gameRoster=state.gameRoster||[];
   const batterFields=[];
   rosterEditorPositionFields=[];
-  const positionOptions=["投手","捕手","一壘","二壘","三壘","游擊","左外野","中外野","右外野","指定打擊"];
-  title.textContent=`${teamNo===1?state.team1Name:state.team2Name} 出賽球員選擇`;
+  const positionOptions=["投手","捕手","1B","2B","3B","SS","LF","CF","RF","DH"];
+  title.textContent="共用球員名單與守備位置";
   body.innerHTML="";
 
   function fillOptions(select,selectedIndex,excludeIndexes){
@@ -1879,7 +1862,7 @@ function openTeamRosterEditor(teamNo){
 function saveTeamRosterEditor(){
   const gameRoster=state.gameRoster||[];
   if(!gameRoster.length){ closeRosterEditor(); return; }
-  const pitcherKey=rosterEditorTeamNo===1?"team1Pitcher":"team2Pitcher";
+  const pitcherKey="team1Pitcher";
 
   const rosterKey=rosterEditorTeamNo===1?"team1Roster":"team2Roster";
   const roster=state[rosterKey]||[];
@@ -1889,7 +1872,11 @@ function saveTeamRosterEditor(){
     if(rosterEditorPositionFields[index]) player.pos=rosterEditorPositionFields[index].value;
   });
   const selectedPitcher=roster.find(player=>player.pos==="投手");
-  if(selectedPitcher) state[pitcherKey]=selectedPitcher.name||"";
+  if(selectedPitcher){
+    state[pitcherKey]=selectedPitcher.name||"";
+    state.team2Pitcher=state.team1Pitcher;
+  }
+  state.team2Roster=state.team1Roster;
   state[rosterKey]=roster;
   saveState();
   closeRosterEditor();
@@ -2088,8 +2075,8 @@ function bindEvents(){
   addLongPress(t1NameEl, ()=> openTextOverlay("請輸入隊名", state.team1Name, (v)=>{ v=String(v||"").trim(); if(!v) return; state.team1Name=v; saveState(); renderAll(); }) );
   addLongPress(t2NameEl, ()=> openTextOverlay("請輸入隊名", state.team2Name, (v)=>{ v=String(v||"").trim(); if(!v) return; state.team2Name=v; saveState(); renderAll(); }) );
 
-  addTapHandler(t1NameEl, null, ()=>openTeamRosterEditor(1));
-  addTapHandler(t2NameEl, null, ()=>toggleRoster(2));
+  addTapHandler(t1NameEl, null, openTeamRosterEditor);
+  addTapHandler(t2NameEl, null, openTeamRosterEditor);
 
   addTapHandler(document.getElementById("team1ScoreArea"),
     ()=>{ state.score1++; saveState(); renderAll(); },
@@ -2137,23 +2124,14 @@ function bindEvents(){
 
   const bp1Box=document.getElementById("bp1Box");
   const bp2Box=document.getElementById("bp2Box");
-  addTapHandler(bp1Box,null,()=>toggleBPMode(1));
-  addTapHandler(bp2Box,null,()=>toggleBPMode(2));
-  addSwipeHandler(bp1Box,()=>{ if(state.bp1Mode==="B") moveBatter(1,+1); },()=>{ if(state.bp1Mode==="B") moveBatter(1,-1); });
-  addSwipeHandler(bp2Box,()=>{ if(state.bp2Mode==="B") moveBatter(2,+1); },()=>{ if(state.bp2Mode==="B") moveBatter(2,-1); });
-
-  /* ✅ 追加：BP 投手模式時，長按可改投手名字（外面也同步） */
-  addLongPress(bp1Box, ()=>{ if(state.bp1Mode==="P") editPitcher(1); });
-  addLongPress(bp2Box, ()=>{ if(state.bp2Mode==="P") editPitcher(2); });
+  addSwipeHandler(bp2Box,()=>{ moveBatter(2,+1); },()=>{ moveBatter(2,-1); });
 
   const bp1ArrowUp=document.getElementById("bp1ArrowUp");
   const bp1ArrowDown=document.getElementById("bp1ArrowDown");
   const bp2ArrowUp=document.getElementById("bp2ArrowUp");
   const bp2ArrowDown=document.getElementById("bp2ArrowDown");
-  if(bp1ArrowUp) bp1ArrowUp.addEventListener("click",(e)=>{ e.stopPropagation(); if(state.bp1Mode==="B") moveBatter(1,-1); });
-  if(bp1ArrowDown) bp1ArrowDown.addEventListener("click",(e)=>{ e.stopPropagation(); if(state.bp1Mode==="B") moveBatter(1,+1); });
-  if(bp2ArrowUp) bp2ArrowUp.addEventListener("click",(e)=>{ e.stopPropagation(); if(state.bp2Mode==="B") moveBatter(2,-1); });
-  if(bp2ArrowDown) bp2ArrowDown.addEventListener("click",(e)=>{ e.stopPropagation(); if(state.bp2Mode==="B") moveBatter(2,+1); });
+  if(bp2ArrowUp) bp2ArrowUp.addEventListener("click",(e)=>{ e.stopPropagation(); moveBatter(2,-1); });
+  if(bp2ArrowDown) bp2ArrowDown.addEventListener("click",(e)=>{ e.stopPropagation(); moveBatter(2,+1); });
 
   const locBox=document.getElementById("topLocationWeather");
   addTapHandler(locBox,null,()=>showMapOverlay()); // 雙擊開地圖
