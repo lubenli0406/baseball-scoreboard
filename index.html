@@ -1721,7 +1721,7 @@ function openTeamRosterEditor(){
   const gameRoster=state.gameRoster||[];
   const batterFields=[];
   rosterEditorPositionFields=[];
-  const positionOptions=["投手","捕手","1B","2B","3B","SS","LF","CF","RF","DH"];
+  const positionOptions=["P","C","1B","2B","3B","SS","LF","CF","RF","DH"];
   title.textContent="共用球員名單與守備位置";
   body.innerHTML="";
 
@@ -2022,7 +2022,7 @@ function bindEvents(){
     gameTitleBox.addEventListener("click", (event)=>{
       if(event.detail === 1){
         resetGameState();
-        toggleFlashSticky("game-reset","比賽重置","flash-greenwhite");
+        toggleFlashSticky("game-reset","比賽開始","flash-greenwhite");
       }
     });
     addLongPress(gameTitleBox, ()=>{
