@@ -71,6 +71,34 @@ const APP_META = {
     .orientation-warning{ display:none; }
   }
 
+  /* 手機低耗能模式：保留狀態顏色，停用持續動畫與大型光暈。 */
+  @media (pointer: coarse), (prefers-reduced-motion: reduce){
+    *, *::before, *::after{
+      animation: none !important;
+      transition: none !important;
+    }
+
+    .bar,
+    .team1-block,
+    .team2-block,
+    .score-box,
+    .bp-box,
+    .osb-unit,
+    .game-box,
+    .inning-box{
+      box-shadow: inset 0 0 0 0.08vh rgba(255,255,255,0.04);
+    }
+
+    .light,
+    .base,
+    .light.on-ball,
+    .light.on-strike,
+    .light.on-out,
+    .base.on{
+      box-shadow: none;
+    }
+  }
+
   .stage{
     position:fixed; inset:0;
     width:100vw; height:100vh;
@@ -1311,6 +1339,9 @@ function syncStateToServer(){
   if(!firebaseReady || applyingSharedState) return;
   firebaseStateRef.set(state).catch(()=>{});
 }
+function getStateSignature(value){
+  try{ return JSON.stringify(value); }catch(e){ return ""; }
+}
 function startSharedSync(){
   if(!isSharedMode()) return;
   const firebaseConfig={
@@ -1329,11 +1360,14 @@ function startSharedSync(){
     firebaseStateRef.on("value",snapshot=>{
       const remote=snapshot.val();
       if(!remote){ syncStateToServer(); return; }
+
+      const previousSignature=getStateSignature(state);
       applyingSharedState=true;
       state=Object.assign(state,remote);
       normalizeSharedRoster();
       applyingSharedState=false;
-      renderAll();
+
+      if(getStateSignature(state)!==previousSignature) renderAll();
     });
   }catch(e){ firebaseReady=false; }
 }
