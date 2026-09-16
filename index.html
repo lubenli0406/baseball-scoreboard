@@ -81,16 +81,17 @@ const APP_META = {
   .bar{
     position:relative;
     width:100vw; height:100vh;
-    padding:1vh 1vw;
+    padding:1vh 0.9vw;
     background:none;
     border-radius:0;
-    border:0.3vh solid rgba(4,30,66,0.95);
-    box-shadow:none;
+    border:0.22vh solid rgba(196,206,212,0.42);
+    box-shadow:inset 0 0 0 0.12vh rgba(255,255,255,0.05);
     display:flex;
     flex-direction:column;
-    gap:1vh;
+    gap:0.32vh;
     overflow:hidden;
     isolation:isolate;
+    animation:none;
   }
 
   /* ✅ 背景獨立層：雙指調透明，文字永遠 100% */
@@ -99,8 +100,8 @@ const APP_META = {
     position:absolute;
     inset:0;
     z-index:0;
-    border-radius:2vh;
-    background:radial-gradient(circle at top,#0a2d64 0%,#020714 55%,#000000 100%);
+    border-radius:0;
+    background:radial-gradient(circle at top, rgba(10,45,100,0.9) 0%, rgba(2,7,20,0.96) 52%, rgba(0,0,0,1) 100%);
     opacity:var(--barBgOpacity, 1);
     pointer-events:none;
   }
@@ -127,7 +128,7 @@ const APP_META = {
     flex:6.0;
     display:flex;
     flex-direction:column;
-    gap:2vh;
+    gap:0.65vh;
   }
 
   /* =========================
@@ -152,37 +153,37 @@ const APP_META = {
 
   /* 比賽名稱 */
   .title-row{
-    flex:1.4;
+    flex:1.0;
     display:flex;
     align-items:center;
     justify-content:center;
   }
   .game-title-box{
-    padding:1.2vh 4vh;
+    padding:0.8vh 3.4vh;
     border-radius:999px;
     background:linear-gradient(135deg, rgba(4,30,66,0.96), rgba(0,0,0,0.95));
-    border:0.45vh solid rgba(196,206,212,0.95);
-    box-shadow:0 0 3vh rgba(0,0,0,1), 0 0 2.4vh rgba(213,0,50,0.9);
+    border:0.28vh solid rgba(196,206,212,0.8);
+    box-shadow:0 0 1.4vh rgba(0,0,0,0.9);
     cursor:pointer;
     max-width:100%;
   }
   .game-title-text{
-    font-size:6.2vh;
+    font-size:5.5vh;
     font-weight:900;
-    letter-spacing:0.1em;
+    letter-spacing:0.08em;
     text-align:center;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
-    text-shadow:0 0 1.8vh rgba(0,0,0,1), 0 0 1.6vh rgba(255,255,255,0.9);
+    text-shadow:0 0 1.2vh rgba(0,0,0,1), 0 0 1vh rgba(255,255,255,0.75);
   }
 
   /* ✅ 上排左右對稱 Grid */
   .top-row{
-    flex:3.4;
+    flex:3.0;
     display:grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4vw;
+    gap: 2.0vw;
     align-items:stretch;
   }
   .team-column{ min-width:0; display:flex; }
@@ -191,16 +192,16 @@ const APP_META = {
   .team2-block{
     width:100%;
     min-width:0;
-    padding:1.8vh 2.4vh;
-    border-radius:2vh;
-    background:linear-gradient(135deg, rgba(4,30,66,0.8), rgba(0,0,0,0.9));
-    border:0.35vh solid rgba(196,206,212,0.9);
-    box-shadow:0 0 2.4vh rgba(0,0,0,0.9);
+    padding:0.9vh 1.0vw;
+    border-radius:1.2vh;
+    background:linear-gradient(180deg, rgba(10,23,48,0.9) 0%, rgba(2,8,20,0.96) 100%);
+    border:0.22vh solid rgba(196,206,212,0.72);
+    box-shadow:inset 0 0 0 0.08vh rgba(255,255,255,0.06), 0 0 1.2vh rgba(0,0,0,0.9);
     overflow:hidden;
 
     display:grid;
     align-items:center;
-    column-gap:2vw;
+    column-gap:1.4vw;
   }
   .team1-block{ grid-template-columns: 1fr var(--scoreW); }
   .team2-block{ grid-template-columns: var(--scoreW) 1fr; }
@@ -208,13 +209,13 @@ const APP_META = {
   /* ✅ 隊名強制完整顯示：不出現 ...（改用 JS 縮字） */
   .team-name{
     min-width:0;
-    font-size:10vh;
+    font-size:8.8vh;
     font-weight:900;
-    letter-spacing:0.05em;
+    letter-spacing:0.04em;
     white-space:nowrap;
     cursor:pointer;
     text-align:center;
-    text-shadow:0 0 1.6vh rgba(0,0,0,1), 0 0 1.4vh rgba(255,255,255,0.85);
+    text-shadow:0 0 1.2vh rgba(0,0,0,1), 0 0 1vh rgba(255,255,255,0.7);
     overflow:hidden;
     text-overflow:clip;
     line-height:1.0;
@@ -223,11 +224,11 @@ const APP_META = {
   .score-box{
     width:100%;
     overflow:hidden;
-    padding:1.8vh 2.0vh;
-    border-radius:1.4vh;
-    background:linear-gradient(135deg,#111,#000);
-    border:0.55vh solid var(--mlb-silver);
-    box-shadow:0 0 3.2vh rgba(0,0,0,1), 0 0 2.2vh rgba(4,30,66,0.9);
+    padding:1.1vh 1.2vh;
+    border-radius:1.1vh;
+    background:linear-gradient(180deg,#111214 0%, #04070c 100%);
+    border:0.28vh solid rgba(196,206,212,0.8);
+    box-shadow:inset 0 0 0 0.08vh rgba(255,255,255,0.04), 0 0 1.2vh rgba(0,0,0,0.8);
     display:flex;
     align-items:center;
     justify-content:center;
@@ -236,12 +237,12 @@ const APP_META = {
   .score-number{
     font-variant-numeric: tabular-nums;
     letter-spacing:-0.04em;
-    font-size:clamp(10vh, 14vw, 18vh);
+    font-size:clamp(8.5vh, 12vw, 16vh);
     font-weight:900;
     color:#fff;
     line-height:0.95;
     display:block;
-    text-shadow:0 0 0.6vh rgba(213,0,50,1), 0 0 1.2vh rgba(0,0,0,1);
+    text-shadow:0 0 0.5vh rgba(213,0,50,1), 0 0 1vh rgba(0,0,0,1);
   }
 
   /* 打擊/投手邊框高亮 */
@@ -260,11 +261,11 @@ const APP_META = {
 
   /* 下排 */
   .bottom-row{
-    flex:3.0;
+    flex:2.8;
     display:flex;
     align-items:center;
     justify-content:space-between;
-    gap:2.2vw;
+    gap:1.2vw;
     min-width:0;
   }
   .center-block{
@@ -277,27 +278,27 @@ const APP_META = {
   .inning-box{
     display:flex;
     align-items:center;
-    gap:2vw;
-    padding:1.2vh 3.2vh;
+    gap:1.4vw;
+    padding:0.9vh 2.2vh;
     border-radius:999px;
     background:linear-gradient(135deg,#041e42,#01040a);
-    border:0.55vh solid var(--mlb-silver);
-    box-shadow:0 0 3vh rgba(0,0,0,0.9), 0 0 2.4vh rgba(4,30,66,0.9);
+    border:0.35vh solid var(--mlb-silver);
+    box-shadow:0 0 1.5vh rgba(0,0,0,0.9);
     cursor:pointer;
     flex:0 0 auto;
   }
-  .inning-number{ font-size:6.5vh; font-weight:900; }
+  .inning-number{ font-size:5.8vh; font-weight:900; }
   .half-indicator{
-    width:6.5vh; height:6.5vh;
+    width:5.8vh; height:5.8vh;
     border-radius:999px;
-    border:0.55vh solid #777;
+    border:0.42vh solid #777;
     background:radial-gradient(circle at top, #041e42 0%, #020813 80%);
-    font-size:4.5vh; font-weight:900;
+    font-size:4vh; font-weight:900;
     display:flex;
     align-items:center;
     justify-content:center;
     cursor:pointer;
-    box-shadow:0 0 2.2vh rgba(0,0,0,1), 0 0 1.8vh rgba(4,30,66,0.9);
+    box-shadow:0 0 1.5vh rgba(0,0,0,1);
     flex:0 0 auto;
   }
   .half-indicator.top{ color:#00d5ff; border-color:#00d5ff; }
@@ -340,9 +341,9 @@ const APP_META = {
   #gameTimer{
     font-weight:900;
     letter-spacing:0.05em;
-    font-size:5vh;
+    font-size:4.3vh;
     cursor:pointer;
-    text-shadow:0 0 1.2vh rgba(0,0,0,1);
+    text-shadow:0 0 1vh rgba(0,0,0,1);
   }
   #gameTimer.running{
     text-shadow:0 0 1.6vh rgba(0,255,153,0.9), 0 0 1vh rgba(0,0,0,1);
@@ -359,12 +360,12 @@ const APP_META = {
   .osb-unit{
     display:flex;
     align-items:center;
-    gap:0.8vw;
-    padding:1.0vh 2.0vh;
+    gap:0.7vw;
+    padding:0.8vh 1.4vh;
     border-radius:999px;
     background:linear-gradient(135deg,#04121f,#010308);
-    border:0.55vh solid rgba(196,206,212,0.95);
-    box-shadow:0 0 2.2vh rgba(0,0,0,1), 0 0 1.8vh rgba(4,30,66,0.9);
+    border:0.35vh solid rgba(196,206,212,0.95);
+    box-shadow:0 0 1.2vh rgba(0,0,0,0.9);
     cursor:pointer;
     max-width:100%;
   }
@@ -429,43 +430,43 @@ const APP_META = {
 
   /* BP */
   .bp-row{
-    flex:1.6;
+    flex:1.2;
     display:flex;
     align-items:center;
     justify-content:center;
-    gap:4vw;
-    padding:0 3vw;
+    gap:1.8vw;
+    padding:0 1.8vw;
   }
   .bp-box{
     flex:1;
     min-width:0;
     max-width:40vw;
-    padding:0.8vh 2vw;
+    padding:0.55vh 1.1vw;
     border-radius:999px;
     background:linear-gradient(135deg,#04121f,#010308);
-    border:0.35vh solid rgba(196,206,212,0.9);
-    box-shadow:0 0 2vh rgba(0,0,0,1), 0 0 1.6vh rgba(4,30,66,0.9);
+    border:0.28vh solid rgba(196,206,212,0.9);
+    box-shadow:0 0 1.1vh rgba(0,0,0,0.9);
     display:flex;
     align-items:center;
-    gap:1vw;
+    gap:0.8vw;
     cursor:pointer;
   }
   .bp-main{
     display:flex;
     flex:1;
     align-items:center;
-    gap:1vw;
+    gap:0.8vw;
     justify-content:center;
   }
   .bp-label{
-    font-size:2.1vh;
+    font-size:1.9vh;
     font-weight:900;
-    letter-spacing:0.18em;
+    letter-spacing:0.14em;
     color:var(--mlb-silver);
     white-space:nowrap;
   }
   .bp-name{
-    font-size:7vh;
+    font-size:4.5vh;
     font-weight:900;
     white-space:nowrap;
     overflow:hidden;
@@ -490,12 +491,12 @@ const APP_META = {
   .roster-panel{
     position:absolute;
     top:14vh; bottom:12vh;
-    width:36vw;
-    padding:2vh 2vw;
-    background:rgba(0,5,15,0.92);
-    border-radius:2vh;
-    border:0.35vh solid rgba(196,206,212,0.95);
-    box-shadow:0 0 3vh rgba(0,0,0,0.9), 0 0 2.6vh rgba(4,30,66,0.9);
+    width:31vw;
+    padding:1.2vh 1.2vw;
+    background:linear-gradient(180deg, rgba(5,9,17,0.98) 0%, rgba(2,4,10,0.98) 100%);
+    border-radius:1.4vh;
+    border:0.22vh solid rgba(196,206,212,0.82);
+    box-shadow:0 0 1.8vh rgba(0,0,0,0.85);
     display:none;
     flex-direction:column;
     z-index:50;
@@ -504,62 +505,67 @@ const APP_META = {
   .roster-left{ left:3vw; }
   .roster-right{ right:3vw; }
 
-  .roster-header{ display:flex; flex-direction:column; margin-bottom:1.2vh; }
+  .roster-header{ display:flex; flex-direction:column; margin-bottom:1vh; }
   .roster-team{
-    font-size:4.6vh;
+    font-size:3.4vh;
     font-weight:900;
     letter-spacing:0.08em;
-    text-shadow:0 0 1.4vh rgba(0,0,0,1);
+    text-shadow:0 0 1vh rgba(0,0,0,1);
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
   }
-  .roster-sub{ font-size:2vh; opacity:0.8; letter-spacing:0.2em; }
+  .roster-sub{ font-size:1.6vh; opacity:0.8; letter-spacing:0.16em; }
 
   .roster-pitcher-box{
     display:flex;
     align-items:center;
-    gap:1.2vw;
-    padding:0.8vh 1.4vh;
+    gap:0.9vw;
+    padding:0.6vh 0.9vh;
     border-radius:999px;
-    background:linear-gradient(135deg,#041e42,#010308);
-    border:0.3vh solid rgba(213,0,50,0.9);
-    margin-bottom:1vh;
+    background:linear-gradient(180deg, rgba(16,31,59,0.9), rgba(3,7,15,0.96));
+    border:0.2vh solid rgba(213,0,50,0.9);
+    margin-bottom:0.9vh;
     flex-shrink:0;
     cursor:pointer;
   }
-  .roster-pitcher-label{ font-size:2.1vh; font-weight:700; color:var(--mlb-silver); }
-  .roster-pitcher-name{ font-size:2.6vh; font-weight:900; }
+  .roster-pitcher-label{ font-size:1.7vh; font-weight:700; color:var(--mlb-silver); }
+  .roster-pitcher-name{ font-size:2.2vh; font-weight:900; }
 
   .roster-head-row,.roster-row{
     display:grid;
-    grid-template-columns:1fr 3fr 1.4fr;
+    grid-template-columns:0.9fr 2.8fr 1.3fr;
     align-items:center;
     gap:0.5vw;
   }
   .roster-head-row{
-    font-size:2vh;
+    font-size:1.5vh;
     opacity:0.85;
-    border-bottom:0.2vh solid rgba(196,206,212,0.7);
-    padding-bottom:0.5vh;
-    margin-bottom:0.5vh;
+    border-bottom:0.12vh solid rgba(196,206,212,0.45);
+    padding:0.2vh 0 0.4vh 0;
+    margin-bottom:0.3vh;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
   }
   .roster-list{
     flex:1;
     overflow:hidden;
     display:flex;
     flex-direction:column;
-    gap:0.4vh;
+    gap:0.22vh;
   }
   .roster-row{
-    font-size:2.8vh;
+    font-size:2.2vh;
     font-weight:700;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
+    padding:0.12vh 0;
+    border-bottom:0.08vh solid rgba(196,206,212,0.18);
   }
-  .roster-col-order{ text-align:center; }
-  .roster-col-pos{ text-align:center; }
+  .roster-col-order{ text-align:center; font-weight:800; }
+  .roster-col-pos{ text-align:center; font-weight:700; }
+  .roster-col-name{ text-align:left; }
 
   /* Flash */
   .flash-overlay{
