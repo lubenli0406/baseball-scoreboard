@@ -1771,7 +1771,7 @@ function saveTeamRosterEditor(){
     if(selected) player.name=selected.name||"";
     if(rosterEditorPositionFields[index]) player.pos=rosterEditorPositionFields[index].value;
   });
-  const selectedPitcher=roster.find(player=>player.pos==="投手");
+  const selectedPitcher=roster.find(player=>player.pos==="P");
   if(selectedPitcher){
     state[pitcherKey]=selectedPitcher.name||"";
     state.team2Pitcher=state.team1Pitcher;
