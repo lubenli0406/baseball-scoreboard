@@ -29,29 +29,13 @@
   }
   #stage{
     position:relative;
-    width:min(100vw, calc(100vh * 16 / 9));
-    height:min(100vh, calc(100vw * 9 / 16));
-    aspect-ratio:16/9;
+    width:min(100vw, calc(100vh * 4 / 3));
+    height:min(100vh, calc(100vw * 3 / 4));
+    aspect-ratio:4/3;
     overflow:hidden;
     background:#000;
     touch-action:none;
     container-type:size;
-  }
-
-  #fieldBg{
-    position:absolute; inset:-8%;
-    width:116%; height:116%;
-    object-fit:cover;
-    filter: blur(18px) saturate(1.1) brightness(.65);
-    transform: translateZ(0) scale(1.05);
-    z-index:0;
-    pointer-events:none;
-  }
-  #bgDim{
-    position:absolute; inset:0;
-    background: radial-gradient(ellipse at center, rgba(0,0,0,.20) 0%, rgba(0,0,0,.62) 70%, rgba(0,0,0,.78) 100%);
-    z-index:1;
-    pointer-events:none;
   }
 
   #app{
@@ -64,7 +48,7 @@
   #field{
     position:absolute; inset:0;
     width:100%; height:100%;
-    object-fit:contain;
+    object-fit:cover;
     display:block;
     z-index:5;
     pointer-events:none;
@@ -74,7 +58,7 @@
     position:absolute;
     transform:translate(-50%,-50%);
     color:#fff;
-    font-size:clamp(16px, 2cqw, 56px);
+    font-size:clamp(16px, 2.73cqw, 64px);
     font-weight:900;
     letter-spacing:.04em;
     -webkit-text-stroke:.2em #000;
@@ -92,7 +76,7 @@
     position:absolute;
     left:50%; top:15.5%;
     transform:translate(-50%,-50%);
-    width:30cqw;
+    width:42cqw;
     text-align:center;
     color:#fff;
     font-weight:900;
@@ -101,8 +85,8 @@
     text-shadow:0 2px 4px rgba(0,0,0,.8);
   }
   #boardInfo > div{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  #boardTitle{ font-size:2cqw; color:#ffd43b; margin-bottom:.4cqw; }
-  #boardTeams{ font-size:2.4cqw; }
+  #boardTitle{ font-size:3cqw; color:#ffd43b; margin-bottom:.5cqw; }
+  #boardTeams{ font-size:3.6cqw; }
   #boardTeams .vs{ color:#ffd43b; margin:0 .6em; font-size:.8em; }
 </style>
 </head>
@@ -110,8 +94,6 @@
 <body>
 <div id="viewport">
   <div id="stage">
-    <img id="fieldBg" src="tw1.png" alt="bg">
-    <div id="bgDim"></div>
     <div id="app">
       <img id="field" src="tw1.png" alt="field">
       <div id="boardInfo">
@@ -126,12 +108,12 @@
 const STORAGE_KEY = "scoreboard_16x9_worldcup_zh_v1";
 
 const labelAnchors = {
-  LF:{x:22.492,y:42.505}, CF:{x:50.000,y:39.000}, RF:{x:76.910,y:42.505},
-  "3B":{x:30.600,y:61.607}, SS:{x:39.979,y:55.300}, "2B":{x:59.357,y:55.163}, "1B":{x:68.680,y:61.698},
-  C:{x:64.533,y:82.549}, P:{x:50.000,y:72.000}
+  LF:{x:13.323,y:42.505}, CF:{x:50.000,y:39.000}, RF:{x:85.880,y:42.505},
+  "3B":{x:24.133,y:61.607}, SS:{x:36.639,y:55.300}, "2B":{x:62.476,y:55.163}, "1B":{x:74.906,y:61.698},
+  C:{x:69.377,y:82.549}, P:{x:50.000,y:72.000}
 };
 const NAME_DOWN = 6.0, NAME_UP = -6.0;
-const nameOffsets = { "3B":{x:29.5,y:69.5}, SS:{x:40.5,y:61.8}, "2B":{x:57.5,y:61.5}, "1B":{x:70,y:69.5} };
+const nameOffsets = { "3B":{x:22.667,y:69.5}, SS:{x:37.333,y:61.8}, "2B":{x:60.0,y:61.5}, "1B":{x:76.667,y:69.5} };
 
 const posMap = {
   "投手":"P","捕手":"C","一壘":"1B","二壘":"2B","三壘":"3B","游擊":"SS",
@@ -200,7 +182,7 @@ window.addEventListener("storage", (e)=>{
 });
 
 /* ===== 拖曳位置記憶 ===== */
-const POS_STORE_PREFIX = "bsDefPos.v1.sync";
+const POS_STORE_PREFIX = "bsDefPos.v2.sync43";
 function posKey(pos){ return `${POS_STORE_PREFIX}.${pos}`; }
 function loadPos(pos){
   try{
