@@ -87,6 +87,23 @@
     touch-action:none;
   }
   .player.dragging{ cursor:grabbing; }
+
+  #boardInfo{
+    position:absolute;
+    left:50%; top:15.5%;
+    transform:translate(-50%,-50%);
+    width:30cqw;
+    text-align:center;
+    color:#fff;
+    font-weight:900;
+    z-index:20;
+    pointer-events:none;
+    text-shadow:0 2px 4px rgba(0,0,0,.8);
+  }
+  #boardInfo > div{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #boardTitle{ font-size:2cqw; color:#ffd43b; margin-bottom:.4cqw; }
+  #boardTeams{ font-size:2.4cqw; }
+  #boardTeams .vs{ color:#ffd43b; margin:0 .6em; font-size:.8em; }
 </style>
 </head>
 
@@ -97,6 +114,10 @@
     <div id="bgDim"></div>
     <div id="app">
       <img id="field" src="tw1.png" alt="field">
+      <div id="boardInfo">
+        <div id="boardTitle"></div>
+        <div id="boardTeams"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -119,6 +140,9 @@ const posMap = {
 };
 
 const defaultState = {
+  gameTitle: "棒球賽",
+  team1Name: "復旦高中",
+  team2Name: "復旦高中",
   team1Pitcher: "林O豪",
   team1Roster: [
     { order: "1", name: "林O豪", pos: "中外野" },
@@ -247,7 +271,22 @@ function buildPlayers(){
 
 function fmtName(o){ return o.name; }
 
+function renderBoard(){
+  document.getElementById("boardTitle").textContent = state.gameTitle || "";
+  const teams = document.getElementById("boardTeams");
+  teams.textContent = "";
+  const a = document.createElement("span");
+  a.textContent = state.team1Name || "";
+  const vs = document.createElement("span");
+  vs.className = "vs";
+  vs.textContent = "vs";
+  const b = document.createElement("span");
+  b.textContent = state.team2Name || "";
+  teams.append(a, vs, b);
+}
+
 function render(){
+  renderBoard();
   app.querySelectorAll(".player").forEach(n=>n.remove());
   const players = buildPlayers();
   Object.keys(players).forEach(key=>{
