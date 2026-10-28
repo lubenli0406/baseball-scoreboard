@@ -73,10 +73,10 @@
   .player{
     position:absolute;
     transform:translate(-50%,-50%);
-    color:#fff;
+    color:#000;
     font-size:clamp(16px, 2cqw, 56px);
     font-weight:900;
-    text-shadow:0 2px 0 rgba(0,0,0,.65),0 0 10px rgba(0,0,0,.85),0 0 18px rgba(0,0,0,.65);
+    text-shadow:0 0 3px rgba(255,255,255,.95),0 0 8px rgba(255,255,255,.85),0 0 14px rgba(255,255,255,.6);
     white-space:nowrap;
     z-index:25;
     pointer-events:auto;
@@ -242,7 +242,7 @@ function buildPlayers(){
   return out;
 }
 
-function fmtName(o){ return o.order ? `${o.name} ${o.order}棒` : o.name; }
+function fmtName(o){ return o.name; }
 
 function render(){
   app.querySelectorAll(".player").forEach(n=>n.remove());
