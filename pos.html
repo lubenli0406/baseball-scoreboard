@@ -111,7 +111,8 @@ const nameOffsets = { "3B":{x:29.5,y:69.5}, SS:{x:40.5,y:61.8}, "2B":{x:57.5,y:6
 
 const posMap = {
   "投手":"P","捕手":"C","一壘":"1B","二壘":"2B","三壘":"3B","游擊":"SS",
-  "左外野":"LF","中外野":"CF","右外野":"RF"
+  "左外野":"LF","中外野":"CF","右外野":"RF",
+  "P":"P","C":"C","1B":"1B","2B":"2B","3B":"3B","SS":"SS","LF":"LF","CF":"CF","RF":"RF"
 };
 
 const defaultState = {
@@ -230,7 +231,7 @@ function buildPlayers(){
   const roster = Array.isArray(state.team1Roster) ? state.team1Roster : [];
   roster.forEach((p, i)=>{
     if(!p || !p.name) return;
-    const key = posMap[String(p.pos||"").trim()];
+    const key = posMap[String(p.pos||"").trim().toUpperCase()];
     if(!key) return;
     out[key] = {name:String(p.name).trim(), order:String(p.order || i+1)};
   });
