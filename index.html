@@ -109,7 +109,7 @@ const APP_META = {
   .bar{
     position:relative;
     width:100vw; height:100vh;
-    padding:1vh 0.9vw;
+    padding:0 0.9vw 1vh;
     background:none;
     border-radius:0;
     border:0.22vh solid rgba(196,206,212,0.42);
@@ -137,8 +137,9 @@ const APP_META = {
 
   .roster-toggle{
     position:absolute;
-    top:5.7vh;
-    right:1vw;
+    top:auto;
+    bottom:7vh;
+    right:0.5vw;
     padding:0.7vh 1.2vw;
     border-radius:999px;
     border:0.28vh solid rgba(196,206,212,0.8);
@@ -187,6 +188,10 @@ const APP_META = {
     justify-content:center;
   }
   .game-title-box{
+    position:absolute;
+    top:65vh;
+    left:50%;
+    transform:translateX(-50%);
     padding:0.8vh 3.4vh;
     border-radius:999px;
     background:linear-gradient(135deg, rgba(4,30,66,0.96), rgba(0,0,0,0.95));
@@ -872,6 +877,9 @@ const APP_META = {
   .map-overlay{ z-index:9999991; background:rgba(0,0,0,0.8); }
 
   @media (max-aspect-ratio: 3/2){
+    .game-title-box{ top:72.5vh; padding:0.35vh 2.4vh; }
+    .game-title-text{ font-size:4vh; }
+    .roster-toggle{ right:0; }
     .osb-block{ gap:1.0vw; }
     .osb-unit{ padding:0.8vh 1.6vh; }
     .osb-letter{ font-size:clamp(4.2vh, 4.8vh, 5.4vh); }
@@ -949,12 +957,6 @@ const APP_META = {
     <div id="team2RosterPanel" class="roster-panel roster-right"></div>
 
     <div class="main-panel">
-      <div class="title-row">
-        <div id="gameTitleBox" class="game-title-box">
-          <div id="gameTitleText" class="game-title-text">棒球賽</div>
-        </div>
-      </div>
-
       <div class="top-row">
         <div class="team-column team1-column">
           <div class="team1-block" id="team1Block">
@@ -972,6 +974,12 @@ const APP_META = {
             </div>
             <div id="team2Name" class="team-name team2-name">復旦高中</div>
           </div>
+        </div>
+      </div>
+
+      <div class="title-row">
+        <div id="gameTitleBox" class="game-title-box">
+          <div id="gameTitleText" class="game-title-text">棒球賽</div>
         </div>
       </div>
 
